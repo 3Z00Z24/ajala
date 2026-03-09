@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>العجلة - اللاعب</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050510;--panel:#0d0d2b;--panel2:#13133a;--border:#1e1e4a;--cyan:#00e5ff;--green:#00ff88;--yellow:#ffea00;--orange:#ff6d00;--text:#fff;--muted:#8888aa;--red:#ff1744;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);}
+
+/* SELECT */
+#selectScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:20px;gap:18px;}
+.logo-p{text-align:center;}
+.logo-p h1{font-size:2.2rem;font-weight:900;font-style:italic;transform:rotate(-4deg);display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--green),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:3px;}
+.sel-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%;max-width:330px;}
+.sel-card h2{text-align:center;color:var(--cyan);font-size:1rem;margin-bottom:16px;}
+.pbtns{display:flex;flex-direction:column;gap:10px;}
+.pbtn{background:var(--panel2);border:2px solid var(--border);border-radius:11px;padding:15px;color:var(--text);font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;}
+.pbtn:active{border-color:var(--cyan);background:rgba(0,229,255,0.1);}
+.wait-msg{text-align:center;color:var(--muted);font-size:0.88rem;padding:20px;}
+
+/* PLAYER SCREEN */
+#playerScreen{display:none;flex-direction:column;height:100vh;}
+.pheader{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border);}
+.my-name{font-size:0.95rem;font-weight:700;color:var(--cyan);}
+.rnd-badge{font-size:0.72rem;color:var(--muted);background:var(--panel2);padding:3px 9px;border-radius:18px;}
+
+/* Main content */
+.pcontent{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column;}
+
+/* Views */
+.view{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:12px;}
+.view.active{display:flex;}
+
+/* Wheel view */
+#wheelView .wheel-wrap-p{position:relative;flex-shrink:0;}
+#wheelView .wptr-p{position:absolute;top:-13px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid var(--yellow);z-index:10;filter:drop-shadow(0 2px 6px rgba(255,234,0,0.9));}
+.spin-hint{font-size:0.82rem;color:var(--muted);text-align:center;margin-top:8px;}
+#spinArea{position:absolute;inset:0;z-index:20;display:none;touch-action:none;}
+.spin-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border:3px solid rgba(0,229,255,0.25);border-radius:50%;border-top-color:var(--cyan);animation:spin-r 2s linear infinite;pointer-events:none;}
+@keyframes spin-r{to{transform:translate(-50%,-50%) rotate(360deg);}}
+
+/* Word view */
+#wordView{gap:10px;}
+.cat-p{background:rgba(0,229,255,0.1);border:1px solid var(--cyan);color:var(--cyan);font-size:0.75rem;padding:3px 14px;border-radius:18px;}
+.wgrid{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;direction:rtl;max-width:100%;padding:8px;}
+.wchar-p{display:inline-flex;align-items:center;justify-content:center;min-width:1.05em;height:1.8em;}
+.wchar-txt-p{font-size:1.3rem;font-weight:900;color:var(--yellow);}
+.wchar-box-p{width:1.25em;height:1.65em;background:rgba(0,229,255,0.07);border:1.5px solid rgba(0,229,255,0.22);border-radius:5px;}
+.wseg-p{display:inline-flex;direction:rtl;margin:2px 3px;position:relative;}
+
+/* Fishing view */
+#fishView{gap:14px;text-align:center;}
+.fish-t-p{font-size:1.1rem;color:var(--green);font-weight:700;}
+.fish-w-p{font-size:1.7rem;color:var(--yellow);font-weight:900;letter-spacing:4px;min-height:55px;word-break:break-all;direction:rtl;}
+
+/* End of round */
+#endView{gap:18px;text-align:center;}
+.big-rnd{font-size:3.5rem;font-weight:900;color:var(--yellow);line-height:1;}
+.big-tot{font-size:1.9rem;font-weight:700;color:var(--green);}
+.vlbl-p{font-size:0.9rem;color:var(--muted);}
+
+/* Final */
+#finalView{gap:14px;text-align:center;overflow-y:auto;}
+
+/* Scores bottom */
+.scores-bot{background:var(--panel);border-top:1px solid var(--border);padding:9px 11px;display:flex;gap:7px;}
+.smini{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:7px;text-align:center;transition:all 0.3s;}
+.smini.active{border-color:var(--cyan);background:rgba(0,229,255,0.07);}
+.sm-n{font-size:0.66rem;color:var(--muted);}
+.sm-r{font-size:1rem;font-weight:900;color:var(--yellow);}
+.sm-t{font-size:0.66rem;color:var(--green);}
+
+/* Toast */
+.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%) translateY(15px);background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:10px 22px;font-size:0.9rem;font-weight:700;opacity:0;transition:all 0.35s;z-index:100;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Spin button for my turn */
+.spin-btn-big{background:linear-gradient(135deg,var(--cyan),var(--green));color:#000;border:none;border-radius:50px;padding:16px 45px;font-size:1.2rem;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:14px;box-shadow:0 4px 20px rgba(0,229,255,0.4);animation:pulse-btn 1.5s ease-in-out infinite;}
+@keyframes pulse-btn{0%,100%{box-shadow:0 4px 20px rgba(0,229,255,0.4);}50%{box-shadow:0 4px 35px rgba(0,229,255,0.8);}}
+</style>
+</head>
+<body>
+
+<div id="selectScreen">
+  <div class="logo-p">
+    <svg width="75" height="75" viewBox="0 0 120 120" style="display:block;margin:0 auto 8px">
+      <circle cx="60" cy="60" r="55" fill="none" stroke="#1e1e4a" stroke-width="3"/>
+      <path d="M60,5 A55,55 0 0,1 115,60" fill="none" stroke="#00e5ff" stroke-width="8" stroke-linecap="round"/>
+      <path d="M115,60 A55,55 0 0,1 60,115" fill="none" stroke="#00ff88" stroke-width="8" stroke-linecap="round"/>
+      <path d="M60,115 A55,55 0 0,1 5,60" fill="none" stroke="#ffea00" stroke-width="8" stroke-linecap="round"/>
+      <path d="M5,60 A55,55 0 0,1 60,5" fill="none" stroke="#ff6d00" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="60" cy="60" r="16" fill="#050510" stroke="#00e5ff" stroke-width="2"/>
+      <text x="60" y="65" text-anchor="middle" font-size="10" font-weight="900" font-family="Cairo" fill="white" transform="rotate(-5,60,60)">عجلة</text>
+    </svg>
+    <h1>العجلة</h1>
+  </div>
+  <div class="sel-card">
+    <h2>اختر اسمك</h2>
+    <div class="pbtns" id="pbtns">
+      <div class="wait-msg">⏳ انتظر المقدم يبدأ اللعبة...</div>
+    </div>
+  </div>
+</div>
+
+<div id="playerScreen">
+  <div class="pheader">
+    <span class="my-name" id="myNameEl">اللاعب</span>
+    <span class="rnd-badge" id="rndBadge">الجولة ١</span>
+  </div>
+  <div class="pcontent">
+    <!-- Wheel view -->
+    <div class="view" id="wheelView">
+      <div class="wheel-wrap-p" id="wwrapP">
+        <div class="wptr-p"></div>
+        <canvas id="pc" ></canvas>
+        <div id="spinArea"><div class="spin-ring"></div></div>
+      </div>
+      <div class="spin-hint" id="spinHint">انتظر دورك...</div>
+      <button class="spin-btn-big" id="spinBtnBig" style="display:none" onclick="triggerSpin()">🎡 الف العجلة!</button>
+    </div>
+    <!-- Word view -->
+    <div class="view" id="wordView">
+      <span class="cat-p" id="catP">الفئة</span>
+      <div id="wgridP"></div>
+    </div>
+    <!-- Fishing view -->
+    <div class="view" id="fishView">
+      <div class="fish-t-p" id="fishTP">🎣 جولة الصيد</div>
+      <div class="fish-w-p" id="fishWP"></div>
+      <div style="color:var(--muted);font-size:0.82rem;text-align:center">الحروف تُكشف تدريجياً - كن أول من يجاوب!</div>
+    </div>
+    <!-- End round view -->
+    <div class="view" id="endView">
+      <div style="font-size:1.2rem;color:var(--cyan);font-weight:700">انتهت الجولة! 🎉</div>
+      <div class="vlbl-p">نقاط هذه الجولة</div>
+      <div class="big-rnd" id="myRndPts">0</div>
+      <div class="vlbl-p">مجموع نقاطك</div>
+      <div class="big-tot" id="myTotPts">0</div>
+    </div>
+    <!-- Final view -->
+    <div class="view" id="finalView">
+      <div style="font-size:1.4rem;font-weight:900;color:var(--yellow)">🏆 انتهت اللعبة!</div>
+      <div id="finalRank"></div>
+    </div>
+  </div>
+  <div class="scores-bot" id="scoresBotEl"></div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const FB={apiKey:"AIzaSyASPPu2V3ZPeJOMTYK_1A-1LxJz-CFFCmc",authDomain:"al-ajala.firebaseapp.com",databaseURL:"https://al-ajala-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"al-ajala",storageBucket:"al-ajala.firebasestorage.app",messagingSenderId:"634499303447",appId:"1:634499303447:web:4a6a6841db4652ab083452"};
+const app=initializeApp(FB);const db=getDatabase(app);
+
+let myIdx=-1,myName='',lastState=null,lastRound=-1;
+let wAng=0,spinning=false,canSpin=false;
+
+// Canvas setup
+const canvas=document.getElementById('pc'),ctx=canvas.getContext('2d');
+function setSize(){const s=Math.min(window.innerWidth-32,300);canvas.width=s;canvas.height=s;}
+setSize();window.addEventListener('resize',()=>{setSize();drawW();});
+
+const BASE_SLICES=[
+  {l:'100',c:'#00e5ff'},{l:'35',c:'#00ff88'},{l:'200',c:'#ffea00'},{l:'25',c:'#ff6d00'},
+  {l:'35',c:'#00e5ff'},{l:'45',c:'#00ff88'},{l:'15',c:'#ffea00'},{l:'100',c:'#ff6d00'},
+  {l:'20',c:'#00e5ff'},{l:'50',c:'#00ff88'},{l:'25',c:'#ffea00'},{l:'40',c:'#ff6d00'},
+  {l:'20',c:'#00e5ff'},{l:'45',c:'#00ff88'},{l:'30',c:'#ffea00'},{l:'50',c:'#ff6d00'},
+  {l:'راحت عليك',c:'#3a3a3a'},{l:'راحت عليك',c:'#3a3a3a'},
+  {l:'إفلاس',c:'#1a0000'},{l:'عطيناك ثنتين',c:'#6a0dad'},
+  {l:'وسيلة مساعدة',c:'#880e4f'},{l:'تحدي',c:'#bf360c'},{l:'تحدي',c:'#bf360c'}
+];
+let curSlices=[...BASE_SLICES];
+
+function drawW(){
+  const W=canvas.width,cx=W/2,cy=W/2,r=W/2-3;
+  ctx.clearRect(0,0,W,W);
+  const n=curSlices.length,arc=2*Math.PI/n;
+  for(let i=0;i<n;i++){
+    const s=wAng+i*arc-Math.PI/2,e=s+arc;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();
+    ctx.fillStyle=curSlices[i].c;ctx.fill();ctx.strokeStyle='#050510';ctx.lineWidth=2;ctx.stroke();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);ctx.textAlign='right';ctx.fillStyle='#fff';
+    const fs=curSlices[i].l.length>5?7:curSlices[i].l.length>3?8:10;
+    ctx.font=`bold ${fs}px Cairo`;ctx.fillText(curSlices[i].l,r-5,4);ctx.restore();
+  }
+  const hr=W*0.08;
+  ctx.beginPath();ctx.arc(cx,cy,hr,0,2*Math.PI);ctx.fillStyle='#050510';ctx.fill();ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font=`bold ${hr*0.7}px Cairo`;ctx.textAlign='center';ctx.fillText('عجلة',cx,cy+hr*0.25);
+}
+
+// Spin animation
+function animateSpin(){
+  spinning=true;canSpin=false;
+  document.getElementById('spinBtnBig').style.display='none';
+  document.getElementById('spinHint').textContent='🎡 العجلة تدور...';
+  const tot=(5+Math.random()*5)*2*Math.PI,dur=3500;
+  const s0=wAng,t0=performance.now();
+  function go(now){
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,4);
+    wAng=s0+tot*e;drawW();
+    if(p<1)requestAnimationFrame(go);else spinning=false;
+  }
+  requestAnimationFrame(go);
+}
+
+window.triggerSpin=function(){
+  if(!canSpin||spinning)return;
+  animateSpin();
+  set(ref(db,'spinReq'),{turn:myIdx,ts:Date.now()});
+};
+
+// ===== FIREBASE LISTENER =====
+onValue(ref(db,'game'),snap=>{
+  const d=snap.val();if(!d)return;lastState=d;
+
+  // Show player buttons if in lobby/waiting
+  if(myIdx===-1){
+    if(d.players&&d.players.length>0){
+      const btns=document.getElementById('pbtns');btns.innerHTML='';
+      d.players.forEach((p,i)=>{
+        const b=document.createElement('button');b.className='pbtn';b.textContent=p.name;
+        b.onclick=()=>selectPlayer(i,p.name,d);btns.appendChild(b);
+      });
+    }
+    return;
+  }
+  updateScreen(d);
+});
+
+function selectPlayer(idx,name,data){
+  myIdx=idx;myName=name;
+  document.getElementById('selectScreen').style.display='none';
+  document.getElementById('playerScreen').style.display='flex';
+  document.getElementById('myNameEl').textContent=name;
+  updateScreen(data);
+}
+
+function updateScreen(d){
+  if(!d)return;
+  document.getElementById('rndBadge').textContent=d.rName||'الجولة';
+  renderScores(d);
+
+  if(d.round!==lastRound){lastRound=d.round;wAng=0;curSlices=[...BASE_SLICES];drawW();}
+
+  if(d.phase==='final'){showView('finalView');renderFinal(d);return;}
+
+  const isMyTurn=d.turn===myIdx;
+  const rType=d.rType||'wheel';
+
+  if(rType==='fish'){
+    showView('fishView');
+    document.getElementById('fishTP').textContent=d.rName||'🎣 جولة الصيد';
+    let fw='';if(d.wd&&Array.isArray(d.wd)){d.wd.forEach(c=>{if(c.t==='s')fw+='   ';else fw+=c.r?c.ch+' ':'_ ';});}
+    document.getElementById('fishWP').textContent=fw;
+    return;
+  }
+
+  // Wheel rounds
+  if(d.wd&&d.wd.length>0&&d.cat){
+    showView('wordView');
+    document.getElementById('catP').textContent=d.cat||'الفئة';
+    renderWordPlayer(d.wd);
+    // Show spin button if my turn and not in guess phase
+    if(isMyTurn&&d.phase!=='guess'&&d.phase!=='fish'){
+      enableSpinBtn();
+    } else {
+      disableSpinBtn(isMyTurn?'دورك - انتظر نتيجة العجلة':`دور ${d.players?.[d.turn]?.name||''}`);
+    }
+  } else {
+    showView('wheelView');
+    if(isMyTurn&&d.phase!=='guess'){enableSpinBtn();}
+    else{disableSpinBtn(isMyTurn?'':(`دور ${d.players?.[d.turn]?.name||''}`));}
+  }
+}
+
+function enableSpinBtn(){
+  canSpin=true;
+  document.getElementById('spinBtnBig').style.display='inline-block';
+  document.getElementById('spinHint').textContent='اضغط الزر لتلف العجلة!';
+  showToast('دورك! 🎡');
+}
+function disableSpinBtn(hint){
+  canSpin=false;
+  document.getElementById('spinBtnBig').style.display='none';
+  if(hint)document.getElementById('spinHint').textContent=hint;
+}
+
+function renderWordPlayer(wd){
+  const el=document.getElementById('wgridP');el.innerHTML='';
+  if(!wd||!Array.isArray(wd))return;
+  let seg=null;
+  wd.forEach(cell=>{
+    if(cell.t==='s'){
+      seg=null;const sp=document.createElement('div');sp.style.cssText='width:16px;display:inline-block;';el.appendChild(sp);return;
+    }
+    if(!seg){
+      seg=document.createElement('div');
+      seg.style.cssText='display:inline-flex;direction:rtl;margin:2px 3px;position:relative;align-items:center;';
+      el.appendChild(seg);
+    }
+    const wrap=document.createElement('div');wrap.style.cssText='position:relative;display:inline-block;min-width:1.1em;';
+    const ref_=document.createElement('div');ref_.textContent=cell.ch;ref_.style.cssText='font-size:1.3rem;font-weight:900;visibility:hidden;';
+    wrap.appendChild(ref_);
+    const ol=document.createElement('div');ol.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;';
+    if(cell.r){const sp=document.createElement('span');sp.textContent=cell.ch;sp.style.cssText='font-size:1.3rem;font-weight:900;color:#ffea00;';ol.appendChild(sp);}
+    else{const b=document.createElement('div');b.style.cssText='width:90%;height:80%;background:rgba(0,229,255,0.07);border:1.5px solid rgba(0,229,255,0.22);border-radius:5px;';ol.appendChild(b);}
+    wrap.appendChild(ol);seg.appendChild(wrap);
+  });
+}
+
+function renderScores(d){
+  const el=document.getElementById('scoresBotEl');el.innerHTML='';
+  if(!d.players)return;
+  const rnd=d.round||0;
+  d.players.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='smini'+(i===d.turn?' active':'');
+    c.innerHTML=`<div class="sm-n">${p.name}</div><div class="sm-r">${p.rpts?.[rnd]||0}</div><div class="sm-t">${p.total||0}🏅</div>`;
+    el.appendChild(c);
+  });
+}
+
+function renderFinal(d){
+  if(!d.players)return;
+  const s=[...d.players].sort((a,b)=>(b.total||0)-(a.total||0));
+  const rk=['🥇','🥈','🥉'],el=document.getElementById('finalRank');el.innerHTML='';
+  s.forEach((p,i)=>{
+    const div=document.createElement('div');div.style.cssText='margin:8px 0;font-size:1rem;font-weight:700;';
+    div.innerHTML=`<span style="color:${p.name===myName?'var(--yellow)':'var(--text)'}">${rk[i]} ${p.name}: ${p.total||0} نقطة</span>`;
+    el.appendChild(div);
+  });
+}
+
+function showView(id){
+  ['wheelView','wordView','fishView','endView','finalView'].forEach(v=>{
+    document.getElementById(v).classList.toggle('active',v===id);
+  });
+}
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toastEl');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+drawW();
+</script>
+</body>
+</html>
