@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>العجلة - اللاعب</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050510;--panel:#0d0d2b;--panel2:#13133a;--border:#1e1e4a;--cyan:#00e5ff;--green:#00ff88;--yellow:#ffea00;--orange:#ff6d00;--text:#fff;--muted:#8888aa;--red:#ff1744;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);}
+
+/* NAME ENTRY */
+#nameScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;gap:18px;}
+.logo-p{text-align:center;margin-bottom:4px;}
+.logo-p h1{font-size:2.2rem;font-weight:900;font-style:italic;transform:rotate(-4deg);display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--green),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:3px;}
+.name-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:26px;width:100%;max-width:330px;}
+.name-card h2{color:var(--cyan);text-align:center;font-size:1.1rem;margin-bottom:16px;}
+.name-card input{width:100%;background:var(--panel2);border:2px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-family:'Cairo',sans-serif;font-size:1.1rem;text-align:center;margin-bottom:14px;display:block;}
+.name-card input:focus{outline:none;border-color:var(--cyan);}
+.btn-join{width:100%;background:linear-gradient(135deg,var(--cyan),var(--green));color:#000;border:none;border-radius:12px;padding:14px;font-size:1.1rem;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;}
+
+/* WAITING */
+#waitScreen{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;gap:16px;text-align:center;}
+.wait-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:26px;width:100%;max-width:330px;}
+.wait-icon{font-size:3rem;margin-bottom:10px;}
+.wait-title{font-size:1.2rem;font-weight:700;color:var(--cyan);margin-bottom:8px;}
+.wait-sub{color:var(--muted);font-size:0.88rem;}
+.wait-name-badge{background:rgba(0,229,255,0.1);border:1px solid var(--cyan);border-radius:10px;padding:10px 20px;font-size:1.1rem;font-weight:700;color:var(--cyan);margin:12px 0;}
+
+/* REJECTED */
+#rejScreen{display:none;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center;}
+
+/* PLAYER SCREEN */
+#playerScreen{display:none;flex-direction:column;height:100vh;}
+.pheader{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;}
+.my-name-h{font-size:0.9rem;font-weight:700;color:var(--cyan);}
+.rnd-badge{font-size:0.7rem;color:var(--muted);background:var(--panel2);padding:3px 9px;border-radius:18px;}
+
+.pcontent{flex:1;overflow:hidden;position:relative;}
+
+/* Views */
+.view{display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;padding:12px;overflow-y:auto;}
+.view.active{display:flex;}
+
+/* Wheel view */
+#wheelView{gap:10px;}
+.wptr-p{position:absolute;top:-13px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid var(--yellow);z-index:10;filter:drop-shadow(0 2px 6px rgba(255,234,0,0.9));}
+.wwrap-p{position:relative;flex-shrink:0;}
+.spin-hint{font-size:0.82rem;color:var(--muted);text-align:center;}
+.spin-btn{background:linear-gradient(135deg,var(--cyan),var(--green));color:#000;border:none;border-radius:50px;padding:15px 42px;font-size:1.15rem;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(0,229,255,0.4);animation:pulse 1.6s ease-in-out infinite;display:none;}
+@keyframes pulse{0%,100%{box-shadow:0 4px 18px rgba(0,229,255,0.4);}50%{box-shadow:0 4px 32px rgba(0,229,255,0.85);}}
+.spin-result-p{font-size:1.2rem;font-weight:900;color:var(--yellow);text-align:center;min-height:28px;}
+
+/* Word view */
+#wordView{gap:10px;}
+.cat-p{background:rgba(0,229,255,0.1);border:1px solid var(--cyan);color:var(--cyan);font-size:0.75rem;padding:3px 14px;border-radius:18px;}
+
+/* Arabic word display for player */
+.wdisp-p{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;direction:rtl;padding:6px;}
+.word-unit-p{display:inline-block;position:relative;direction:rtl;margin:2px 3px;}
+.word-full-p{font-size:1.3rem;font-weight:900;color:transparent;white-space:nowrap;direction:rtl;unicode-bidi:embed;}
+.word-ol-p{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:row-reverse;align-items:stretch;}
+.wov-cell-p{flex:1;display:flex;align-items:center;justify-content:center;}
+.wov-char-p{font-size:1.3rem;font-weight:900;color:var(--yellow);}
+.wov-box-p{width:88%;height:80%;background:rgba(0,229,255,0.07);border:1.5px solid rgba(0,229,255,0.22);border-radius:5px;}
+.wspace-p{width:14px;display:inline-block;}
+
+/* Fishing view - LARGE */
+#fishView{gap:12px;text-align:center;}
+.fish-lbl-p{font-size:1rem;color:var(--green);font-weight:700;}
+.fish-word-big{font-size:2.8rem;font-weight:900;color:var(--yellow);letter-spacing:6px;direction:rtl;line-height:1.2;word-break:break-all;padding:10px;}
+
+/* End round */
+#endView{gap:16px;text-align:center;}
+.big-rnd-p{font-size:3.5rem;font-weight:900;color:var(--yellow);line-height:1;}
+.big-tot-p{font-size:2rem;font-weight:700;color:var(--green);}
+.lbl-p{font-size:0.88rem;color:var(--muted);}
+
+/* Final */
+#finalView{gap:12px;text-align:center;padding:16px;}
+
+/* Scores bottom bar */
+.scores-bot{background:var(--panel);border-top:1px solid var(--border);padding:8px 10px;display:flex;gap:6px;flex-shrink:0;}
+.smini{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:6px;text-align:center;transition:all 0.3s;}
+.smini.active{border-color:var(--cyan);background:rgba(0,229,255,0.07);}
+.sm-n{font-size:0.62rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sm-r{font-size:0.95rem;font-weight:900;color:var(--yellow);}
+.sm-t{font-size:0.62rem;color:var(--green);}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:10px 20px;font-size:0.88rem;font-weight:700;opacity:0;transition:all 0.35s;z-index:100;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- NAME ENTRY -->
+<div id="nameScreen">
+  <div class="logo-p">
+    <svg width="70" height="70" viewBox="0 0 120 120" style="display:block;margin:0 auto 6px">
+      <circle cx="60" cy="60" r="55" fill="none" stroke="#1e1e4a" stroke-width="3"/>
+      <path d="M60,5 A55,55 0 0,1 115,60" fill="none" stroke="#00e5ff" stroke-width="8" stroke-linecap="round"/>
+      <path d="M115,60 A55,55 0 0,1 60,115" fill="none" stroke="#00ff88" stroke-width="8" stroke-linecap="round"/>
+      <path d="M60,115 A55,55 0 0,1 5,60" fill="none" stroke="#ffea00" stroke-width="8" stroke-linecap="round"/>
+      <path d="M5,60 A55,55 0 0,1 60,5" fill="none" stroke="#ff6d00" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="60" cy="60" r="16" fill="#050510" stroke="#00e5ff" stroke-width="2"/>
+      <text x="60" y="65" text-anchor="middle" font-size="10" font-weight="900" font-family="Cairo" fill="white" transform="rotate(-5,60,60)">عجلة</text>
+    </svg>
+    <h1>العجلة</h1>
+  </div>
+  <div class="name-card">
+    <h2>أدخل اسمك للانضمام</h2>
+    <input type="text" id="nameInput" placeholder="اسمك هنا" maxlength="20" autocomplete="off"/>
+    <button class="btn-join" onclick="joinGame()">انضمام 🎮</button>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div id="waitScreen">
+  <div class="wait-card">
+    <div class="wait-icon">⏳</div>
+    <div class="wait-title">طلبك أُرسل!</div>
+    <div class="wait-name-badge" id="waitNameBadge">اسمك</div>
+    <div class="wait-sub">انتظر موافقة المقدم...</div>
+    <div id="waitStatus" style="margin-top:12px;font-size:0.82rem;color:var(--muted)"></div>
+  </div>
+</div>
+
+<!-- REJECTED -->
+<div id="rejScreen">
+  <div class="wait-card" style="border-color:var(--red)">
+    <div style="font-size:2.5rem">❌</div>
+    <div style="font-size:1.1rem;font-weight:700;color:var(--red);margin:10px 0">لم يتم القبول</div>
+    <div style="color:var(--muted);margin-bottom:16px;font-size:0.88rem">لم يوافق المقدم على انضمامك</div>
+    <button class="btn-join" onclick="tryAgain()">حاول مرة أخرى</button>
+  </div>
+</div>
+
+<!-- PLAYER SCREEN -->
+<div id="playerScreen">
+  <div class="pheader">
+    <span class="my-name-h" id="myNameEl">اللاعب</span>
+    <span class="rnd-badge" id="rndBadge">الجولة ١</span>
+  </div>
+  <div class="pcontent">
+    <!-- Wheel -->
+    <div class="view" id="wheelView">
+      <div class="wwrap-p">
+        <div class="wptr-p"></div>
+        <canvas id="pc"></canvas>
+      </div>
+      <div class="spin-hint" id="spinHint">انتظر دورك...</div>
+      <button class="spin-btn" id="spinBtn" onclick="triggerSpin()">🎡 الف العجلة!</button>
+      <div class="spin-result-p" id="spinResP"></div>
+    </div>
+
+    <!-- Word + wheel on same screen -->
+    <div class="view" id="wordView">
+      <div class="wwrap-p" style="margin-bottom:8px">
+        <div class="wptr-p"></div>
+        <canvas id="pc2"></canvas>
+      </div>
+      <span class="cat-p" id="catP">الفئة</span>
+      <div class="wdisp-p" id="wdispP"></div>
+      <button class="spin-btn" id="spinBtn2" onclick="triggerSpin()">🎡 الف العجلة!</button>
+      <div class="spin-result-p" id="spinResP2"></div>
+      <div class="spin-hint" id="spinHint2"></div>
+    </div>
+
+    <!-- Fishing -->
+    <div class="view" id="fishView">
+      <div class="fish-lbl-p" id="fishLblP">🎣 جولة الصيد</div>
+      <div class="fish-word-big" id="fishWordBig"></div>
+      <div style="color:var(--muted);font-size:0.8rem;text-align:center">كن أول من يجاوب!</div>
+    </div>
+
+    <!-- End round -->
+    <div class="view" id="endView">
+      <div style="font-size:1.1rem;color:var(--cyan);font-weight:700">🎉 انتهت الجولة!</div>
+      <div class="lbl-p">نقاط هذه الجولة</div>
+      <div class="big-rnd-p" id="myRndP">0</div>
+      <div class="lbl-p">مجموع نقاطك</div>
+      <div class="big-tot-p" id="myTotP">0</div>
+    </div>
+
+    <!-- Final -->
+    <div class="view" id="finalView">
+      <div style="font-size:1.4rem;font-weight:900;color:var(--yellow)">🏆 انتهت اللعبة!</div>
+      <div id="finalRankEl" style="margin-top:12px;width:100%;max-width:300px"></div>
+    </div>
+  </div>
+
+  <div class="scores-bot" id="scoresBotEl"></div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const FB={apiKey:"AIzaSyASPPu2V3ZPeJOMTYK_1A-1LxJz-CFFCmc",authDomain:"al-ajala.firebaseapp.com",databaseURL:"https://al-ajala-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"al-ajala",storageBucket:"al-ajala.firebasestorage.app",messagingSenderId:"634499303447",appId:"1:634499303447:web:4a6a6841db4652ab083452"};
+const app=initializeApp(FB);
+const db=getDatabase(app);
+
+let myName='',myIdx=-1,myJoinKey='',isApproved=false;
+let wAng=0,wAng2=0,spinning=false,canSpin=false;
+let lastGameTs=0,lastRound=-1;
+
+// ===== CANVAS SETUP =====
+const canvas=document.getElementById('pc'),ctx=canvas.getContext('2d');
+const canvas2=document.getElementById('pc2'),ctx2=canvas2.getContext('2d');
+
+function setCanvasSize(){
+  const vw=window.innerWidth;
+  const s=Math.min(vw-40,240);
+  canvas.width=s;canvas.height=s;
+  canvas2.width=s;canvas2.height=s;
+}
+setCanvasSize();
+window.addEventListener('resize',()=>{setCanvasSize();drawW();drawW2();});
+
+const SLICES=[
+  {l:'100',c:'#00e5ff'},{l:'35',c:'#00ff88'},{l:'200',c:'#ffea00'},{l:'25',c:'#ff6d00'},
+  {l:'35',c:'#00e5ff'},{l:'45',c:'#00ff88'},{l:'15',c:'#ffea00'},{l:'100',c:'#ff6d00'},
+  {l:'20',c:'#00e5ff'},{l:'50',c:'#00ff88'},{l:'25',c:'#ffea00'},{l:'40',c:'#ff6d00'},
+  {l:'20',c:'#00e5ff'},{l:'45',c:'#00ff88'},{l:'30',c:'#ffea00'},{l:'50',c:'#ff6d00'},
+  {l:'راحت عليك',c:'#3a3a3a'},{l:'راحت عليك',c:'#3a3a3a'},
+  {l:'إفلاس',c:'#1a0000'},{l:'عطيناك ثنتين',c:'#6a0dad'},
+  {l:'وسيلة مساعدة',c:'#880e4f'},{l:'تحدي',c:'#bf360c'},{l:'تحدي',c:'#bf360c'}
+];
+
+function drawCanvas(c,ctx,ang){
+  const W=c.width,cx=W/2,cy=W/2,r=W/2-2;
+  ctx.clearRect(0,0,W,W);
+  const n=SLICES.length,arc=2*Math.PI/n;
+  for(let i=0;i<n;i++){
+    const s=ang+i*arc-Math.PI/2,e=s+arc;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();
+    ctx.fillStyle=SLICES[i].c;ctx.fill();ctx.strokeStyle='#050510';ctx.lineWidth=2;ctx.stroke();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);ctx.textAlign='right';ctx.fillStyle='#fff';
+    const fs=SLICES[i].l.length>5?6:SLICES[i].l.length>3?7:9;
+    ctx.font=`bold ${fs}px Cairo`;ctx.fillText(SLICES[i].l,r-5,3);ctx.restore();
+  }
+  const hr=W*0.09;
+  ctx.beginPath();ctx.arc(cx,cy,hr,0,2*Math.PI);ctx.fillStyle='#050510';ctx.fill();
+  ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font=`bold ${Math.floor(hr*0.65)}px Cairo`;ctx.textAlign='center';
+  ctx.fillText('عجلة',cx,cy+hr*0.25);
+}
+function drawW(){drawCanvas(canvas,ctx,wAng);}
+function drawW2(){drawCanvas(canvas2,ctx2,wAng2);}
+
+// ===== JOIN =====
+window.joinGame=function(){
+  const name=document.getElementById('nameInput').value.trim();
+  if(!name){alert('أدخل اسمك');return;}
+  myName=name;
+  document.getElementById('waitNameBadge').textContent=name;
+  document.getElementById('nameScreen').style.display='none';
+  document.getElementById('waitScreen').style.display='flex';
+  // Push join request
+  const joinRef=push(ref(db,'joinReqs'));
+  myJoinKey=joinRef.key;
+  set(joinRef,{name,ts:Date.now()});
+  // Watch game state for approval
+  watchForApproval();
+};
+
+window.tryAgain=function(){
+  document.getElementById('rejScreen').style.display='none';
+  document.getElementById('nameScreen').style.display='flex';
+  myName='';myJoinKey='';isApproved=false;
+};
+
+function watchForApproval(){
+  onValue(ref(db,'game'),snap=>{
+    const d=snap.val();
+    if(!d)return;
+    if(isApproved){handleGameUpdate(d);return;}
+    // Check if our name is in approved players
+    if(d.players&&Array.isArray(d.players)){
+      const idx=d.players.findIndex(p=>p.name===myName);
+      if(idx>=0){
+        isApproved=true;myIdx=idx;
+        document.getElementById('waitScreen').style.display='none';
+        document.getElementById('playerScreen').style.display='flex';
+        document.getElementById('myNameEl').textContent=myName;
+        handleGameUpdate(d);
+        return;
+      }
+    }
+    // Still waiting
+    if(d.phase==='lobby'){
+      document.getElementById('waitStatus').textContent='المقدم يراجع طلبك...';
+    }
+  });
+}
+
+// ===== GAME UPDATE =====
+function handleGameUpdate(d){
+  if(!d||!isApproved)return;
+  if(d.ts===lastGameTs)return;
+  lastGameTs=d.ts;
+  document.getElementById('rndBadge').textContent=d.rName||'الجولة';
+  renderScores(d);
+  if(d.round!==lastRound){lastRound=d.round;wAng=0;wAng2=0;drawW();drawW2();}
+  if(d.phase==='final'){showView('finalView');renderFinal(d);return;}
+  const isMyTurn=d.turn===myIdx;
+  const rType=d.rType||'wheel';
+  if(rType==='fish'){
+    showView('fishView');
+    document.getElementById('fishLblP').textContent=d.rName||'🎣 جولة الصيد';
+    let fw='';if(d.wd&&Array.isArray(d.wd)){d.wd.forEach(c=>{if(c.t==='s')fw+='   ';else fw+=c.r?(c.ch+' '):'_ ';});}
+    document.getElementById('fishWordBig').textContent=fw;
+    return;
+  }
+  // Wheel rounds
+  if(d.wd&&d.wd.length>0&&d.cat){
+    showView('wordView');
+    document.getElementById('catP').textContent=d.cat||'الفئة';
+    renderWordP(d.wd,'wdispP');
+    // Spin control
+    if(isMyTurn&&d.phase!=='guess'){enableSpin2(true);}
+    else{enableSpin2(false);document.getElementById('spinHint2').textContent=isMyTurn?'':(`دور ${d.players?.[d.turn]?.name||''}`);}
+    document.getElementById('spinResP2').textContent=d.sLabel||'';
+  } else {
+    showView('wheelView');
+    if(isMyTurn&&d.phase!=='guess'){enableSpin1(true);}
+    else{enableSpin1(false);document.getElementById('spinHint').textContent=isMyTurn?'':(`دور ${d.players?.[d.turn]?.name||''}`);}
+    document.getElementById('spinResP').textContent=d.sLabel||'';
+  }
+}
+
+function enableSpin1(on){
+  canSpin=on;
+  document.getElementById('spinBtn').style.display=on?'inline-block':'none';
+  document.getElementById('spinHint').textContent=on?'اضغط لتلف العجلة!':'انتظر دورك...';
+  if(on)showToast('دورك! 🎡');
+}
+function enableSpin2(on){
+  canSpin=on;
+  document.getElementById('spinBtn2').style.display=on?'inline-block':'none';
+  if(on)showToast('دورك! 🎡');
+}
+
+window.triggerSpin=function(){
+  if(!canSpin||spinning)return;
+  canSpin=false;spinning=true;
+  document.getElementById('spinBtn').style.display='none';
+  document.getElementById('spinBtn2').style.display='none';
+  document.getElementById('spinHint').textContent='🎡 العجلة تدور...';
+  document.getElementById('spinHint2').textContent='🎡 العجلة تدور...';
+  // Animate locally
+  const tot=(5+Math.random()*5)*2*Math.PI,dur=3500;
+  const s0=wAng,s02=wAng2,t0=performance.now();
+  function go(now){
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,4);
+    wAng=s0+tot*e;wAng2=s02+tot*e;drawW();drawW2();
+    if(p<1)requestAnimationFrame(go);else spinning=false;
+  }
+  requestAnimationFrame(go);
+  // Notify host
+  set(ref(db,'spinReq'),{turn:myIdx,ts:Date.now()});
+};
+
+// ===== WORD RENDER =====
+function renderWordP(wd,containerId){
+  const el=document.getElementById(containerId);if(!el)return;el.innerHTML='';
+  if(!wd||!Array.isArray(wd))return;
+  let seg=null;
+  wd.forEach(cell=>{
+    if(cell.t==='s'){
+      seg=null;const sp=document.createElement('div');sp.className='wspace-p';el.appendChild(sp);return;
+    }
+    if(!seg){
+      seg=document.createElement('div');
+      // Word unit - uses full word for proper Arabic shaping
+      seg.className='word-unit-p';
+      // We need to collect all chars of this word first
+      // Instead, build char by char and append to current segment
+      el.appendChild(seg);
+    }
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:relative;display:inline-block;';
+    const ref_=document.createElement('div');ref_.className='word-full-p';ref_.textContent=cell.ch;
+    wrap.appendChild(ref_);
+    const ol=document.createElement('div');ol.className='word-ol-p';ol.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;';
+    if(cell.r){const s=document.createElement('span');s.className='wov-char-p';s.textContent=cell.ch;ol.appendChild(s);}
+    else{const b=document.createElement('div');b.className='wov-box-p';ol.appendChild(b);}
+    wrap.appendChild(ol);
+    seg.appendChild(wrap);
+  });
+}
+
+function renderScores(d){
+  const el=document.getElementById('scoresBotEl');el.innerHTML='';
+  if(!d.players)return;
+  const rnd=d.round||0;
+  d.players.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='smini'+(i===d.turn?' active':'');
+    c.innerHTML=`<div class="sm-n">${p.name}</div><div class="sm-r">${p.rpts?.[rnd]||0}</div><div class="sm-t">${p.total||0}🏅</div>`;
+    el.appendChild(c);
+  });
+}
+
+function renderFinal(d){
+  if(!d.players)return;
+  const s=[...d.players].sort((a,b)=>(b.total||0)-(a.total||0));
+  const rk=['🥇','🥈','🥉'],el=document.getElementById('finalRankEl');el.innerHTML='';
+  s.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='margin:8px 0;font-size:1.05rem;font-weight:700;text-align:center;';
+    div.innerHTML=`<span style="color:${p.name===myName?'var(--yellow)':'var(--text)'}">${rk[i]} ${p.name}: ${p.total||0} نقطة</span>`;
+    el.appendChild(div);
+  });
+}
+
+function showView(id){
+  ['wheelView','wordView','fishView','endView','finalView'].forEach(v=>{
+    document.getElementById(v).classList.toggle('active',v===id);
+  });
+}
+
+let toastT;
+function showToast(msg){
+  const t=document.getElementById('toastEl');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+drawW();drawW2();
+</script>
+</body>
+</html>
