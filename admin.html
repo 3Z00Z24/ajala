@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>العجلة - Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Changa:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050510;--panel:#0d0d2b;--panel2:#13133a;--border:#1e1e4a;--cyan:#00e5ff;--green:#00ff88;--yellow:#ffea00;--text:#fff;--muted:#8888aa;--red:#ff1744;--purple:#9c27b0;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow-x:hidden;}
+body{font-family:'Changa','Cairo',sans-serif;background:var(--bg);color:var(--text);}
+
+#joinScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;gap:18px;}
+.join-card-a{background:var(--panel);border:2px solid var(--purple);border-radius:18px;padding:26px;width:100%;max-width:330px;text-align:center;}
+.join-card-a h2{color:var(--purple);font-size:1.1rem;margin-bottom:6px;}
+.join-card-a p{color:var(--muted);font-size:0.8rem;margin-bottom:18px;}
+.join-card-a input{width:100%;background:var(--panel2);border:2px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'Cairo',sans-serif;font-size:1rem;text-align:center;margin-bottom:12px;display:block;}
+.join-card-a input:focus{outline:none;border-color:var(--purple);}
+.btn-admin{width:100%;background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;border:none;border-radius:12px;padding:13px;font-size:1rem;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;}
+.err-msg{color:var(--red);font-size:0.82rem;margin-top:8px;min-height:18px;}
+
+#adminScreen{display:none;flex-direction:column;height:100vh;}
+.aheader{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--panel);border-bottom:2px solid var(--purple);flex-shrink:0;}
+.admin-badge{background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;font-size:0.75rem;font-weight:900;padding:3px 10px;border-radius:20px;}
+.round-info{font-size:0.78rem;color:var(--cyan);font-weight:700;}
+
+.tabs{display:flex;background:var(--panel2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{flex:1;padding:11px 6px;text-align:center;font-size:0.82rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;font-family:'Changa','Cairo',sans-serif;}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+.tab-content{display:none;flex:1;overflow-y:auto;padding:14px;}
+.tab-content.active{display:block;}
+
+.need-alert{background:rgba(255,234,0,0.1);border:2px solid var(--yellow);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;display:none;}
+.need-alert p{color:var(--yellow);font-weight:700;font-size:0.88rem;}
+.info-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;}
+.info-lbl{font-size:0.65rem;color:var(--muted);margin-bottom:3px;}
+.info-val{font-size:0.95rem;font-weight:700;color:var(--cyan);}
+.sect-lbl{font-size:0.72rem;color:var(--muted);font-weight:700;margin-bottom:10px;}
+.ig{margin-bottom:12px;}
+.ig label{font-size:0.7rem;color:var(--muted);display:block;margin-bottom:4px;}
+.ig input{width:100%;background:var(--panel2);border:2px solid var(--border);border-radius:11px;padding:12px 14px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.95rem;}
+.ig input:focus{outline:none;border-color:var(--purple);}
+.btn-send{width:100%;background:linear-gradient(135deg,var(--green),#00c853);color:#000;border:none;border-radius:12px;padding:13px;font-size:0.95rem;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;}
+
+.pcard-a{background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:13px;margin-bottom:11px;}
+.pcard-a.editing{border-color:var(--purple);}
+.pc-name{font-size:1rem;font-weight:800;color:var(--cyan);margin-bottom:8px;}
+.pc-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.pc-lbl{font-size:0.65rem;color:var(--muted);width:65px;flex-shrink:0;}
+.pc-val{font-size:1.1rem;font-weight:800;color:var(--yellow);}
+.pc-tot{font-size:0.88rem;font-weight:700;color:var(--green);}
+.pc-input{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:1rem;font-family:'Cairo',sans-serif;width:85px;text-align:center;}
+.pc-input:focus{outline:none;border-color:var(--purple);}
+.btn-edit{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:5px 13px;font-size:0.78rem;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:5px;}
+.btn-save{background:var(--green);color:#000;border:none;border-radius:8px;padding:5px 13px;font-size:0.78rem;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:5px;margin-left:6px;}
+.btn-cancel{background:#444;color:#fff;border:none;border-radius:8px;padding:5px 13px;font-size:0.78rem;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:5px;margin-left:6px;}
+
+.toast-a{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--panel);border:2px solid var(--purple);border-radius:12px;padding:10px 22px;font-size:0.88rem;font-weight:700;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;pointer-events:none;}
+.toast-a.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- JOIN -->
+<div id="joinScreen">
+  <div style="text-align:center;margin-bottom:4px">
+    <div style="font-size:2.8rem">👑</div>
+    <div style="font-size:1.3rem;font-weight:900;background:linear-gradient(135deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px">لوحة Admin</div>
+  </div>
+  <div class="join-card-a">
+    <h2>دخول المقدم الثاني</h2>
+    <p>اكتب كلمة السر للدخول تلقائياً</p>
+    <input type="password" id="adminPass" placeholder="كلمة السر" autocomplete="off"
+      oninput="checkAuto(this.value)"
+      onkeydown="if(event.key==='Enter')tryLogin()"/>
+    <button class="btn-admin" onclick="tryLogin()">دخول 👑</button>
+    <div class="err-msg" id="errMsg"></div>
+  </div>
+</div>
+
+<!-- ADMIN SCREEN -->
+<div id="adminScreen">
+  <div class="aheader">
+    <span class="admin-badge">👑 Admin</span>
+    <span class="round-info" id="aRoundInfo">-</span>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('wordTab',this)">📝 الكلمة</div>
+    <div class="tab" onclick="switchTab('ptsTab',this)">🏅 النقاط</div>
+  </div>
+  <div class="tab-content active" id="wordTab">
+    <div class="need-alert" id="needAlert"><p>⚠️ المقدم ينتظر كلمة جديدة!</p></div>
+    <div class="info-card">
+      <div class="info-lbl">الجولة الحالية</div>
+      <div class="info-val" id="aRoundName">-</div>
+    </div>
+    <div class="sect-lbl">أدخل كلمة / عبارة الجولة</div>
+    <div class="ig">
+      <label>الفئة</label>
+      <input type="text" id="aWordCat" placeholder="مثال: رياضة، أماكن..." autocomplete="off"/>
+    </div>
+    <div class="ig">
+      <label>العبارة أو الكلمة</label>
+      <input type="text" id="aWordText" placeholder="اكتب العبارة هنا" autocomplete="off"/>
+    </div>
+    <button class="btn-send" onclick="sendWord()">إرسال للمقدم ✓</button>
+  </div>
+  <div class="tab-content" id="ptsTab">
+    <div class="sect-lbl">تعديل نقاط اللاعبين</div>
+    <div id="ptsCards"></div>
+  </div>
+</div>
+
+<div class="toast-a" id="toastA"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const FB={
+  apiKey:"AIzaSyASPPu2V3ZPeJOMTYK_1A-1LxJz-CFFCmc",
+  authDomain:"al-ajala.firebaseapp.com",
+  databaseURL:"https://al-ajala-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"al-ajala",storageBucket:"al-ajala.firebasestorage.app",
+  messagingSenderId:"634499303447",appId:"1:634499303447:web:4a6a6841db4652ab083452"
+};
+const app=initializeApp(FB);
+const db=getDatabase(app);
+
+const PASS='Admin AZ';
+let loggedIn=false, lastGame=null, editIdx=null;
+
+// ===== LOGIN =====
+window.checkAuto=function(v){ if(v===PASS)login(); };
+window.tryLogin=function(){
+  const v=document.getElementById('adminPass').value;
+  if(v===PASS){login();}
+  else{document.getElementById('errMsg').textContent='كلمة السر غلط!';}
+};
+
+function login(){
+  loggedIn=true;
+  document.getElementById('joinScreen').style.display='none';
+  document.getElementById('adminScreen').style.display='flex';
+  toast('✅ أهلاً Admin!');
+  listen();
+}
+
+// ===== FIREBASE LISTENERS =====
+function listen(){
+  onValue(ref(db,'game'),snap=>{
+    const d=snap.val();
+    if(!d||!loggedIn)return;
+    lastGame=d;
+    document.getElementById('aRoundInfo').textContent=d.rName||'-';
+    document.getElementById('aRoundName').textContent=d.rName||'-';
+    renderPts(d);
+  });
+  onValue(ref(db,'needWord'),snap=>{
+    const d=snap.val();
+    const el=document.getElementById('needAlert');
+    if(d&&d.ts){el.style.display='block';toast('⚠️ المقدم ينتظر كلمة!');}
+    else el.style.display='none';
+  });
+}
+
+// ===== WORD =====
+window.sendWord=function(){
+  const word=document.getElementById('aWordText').value.trim();
+  const cat=document.getElementById('aWordCat').value.trim()||'عام';
+  if(!word){toast('أدخل الكلمة أولاً');return;}
+  set(ref(db,'adminWord'),{word,cat,ts:Date.now()});
+  document.getElementById('aWordText').value='';
+  document.getElementById('aWordCat').value='';
+  document.getElementById('needAlert').style.display='none';
+  toast('✅ تم إرسال الكلمة!');
+};
+
+// ===== POINTS =====
+function getRpts(p,rnd){
+  const k='r'+rnd;
+  if(p[k]!==undefined)return p[k];
+  if(Array.isArray(p.rpts))return p.rpts[rnd]||0;
+  return 0;
+}
+
+function renderPts(d){
+  if(!d.players)return;
+  const rnd=d.round||0;
+  const el=document.getElementById('ptsCards');
+  el.innerHTML='';
+  d.players.forEach((p,i)=>{
+    const rpts=getRpts(p,rnd);
+    const card=document.createElement('div');
+    card.className='pcard-a'+(i===editIdx?' editing':'');
+    if(i===editIdx){
+      card.innerHTML=`
+        <div class="pc-name">${p.name}</div>
+        <div class="pc-row"><span class="pc-lbl">نقاط الجولة:</span><input class="pc-input" id="ev${i}" type="number" value="${rpts}"/></div>
+        <div class="pc-row"><span class="pc-lbl">المجموع:</span><span class="pc-tot">${p.total||0} 🏅</span></div>
+        <button class="btn-save" onclick="savePts(${i},${rnd})">✓ حفظ</button>
+        <button class="btn-cancel" onclick="cancelEd()">✗ إلغاء</button>`;
+    } else {
+      card.innerHTML=`
+        <div class="pc-name">${i===d.turn?'🎯 ':''} ${p.name}</div>
+        <div class="pc-row"><span class="pc-lbl">نقاط الجولة:</span><span class="pc-val">${rpts}</span></div>
+        <div class="pc-row"><span class="pc-lbl">المجموع:</span><span class="pc-tot">${p.total||0} 🏅</span></div>
+        <button class="btn-edit" onclick="startEd(${i})">✏️ تعديل</button>`;
+    }
+    el.appendChild(card);
+  });
+}
+
+window.startEd=function(i){editIdx=i;if(lastGame)renderPts(lastGame);};
+window.cancelEd=function(){editIdx=null;if(lastGame)renderPts(lastGame);};
+window.savePts=function(playerIdx,round){
+  const inp=document.getElementById('ev'+playerIdx);
+  if(!inp)return;
+  const val=parseInt(inp.value)||0;
+  set(ref(db,'adminEdit'),{playerIdx,round,rpts:val,ts:Date.now()});
+  editIdx=null;
+  toast('✅ تم التعديل');
+};
+
+// ===== TABS =====
+window.switchTab=function(id,el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+};
+
+// ===== TOAST =====
+let _tt;
+function toast(m){
+  const t=document.getElementById('toastA');
+  t.textContent=m;t.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
