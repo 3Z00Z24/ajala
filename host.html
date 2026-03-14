@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>العجلة - التحكم</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Changa:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050510;--panel:#0d0d2b;--panel2:#13133a;--border:#1e1e4a;--cyan:#00e5ff;--green:#00ff88;--yellow:#ffea00;--orange:#ff6d00;--text:#fff;--muted:#8888aa;--red:#ff1744;--purple:#9c27b0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Changa','Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* SETUP */
+#setupScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;gap:20px;}
+.logo-big{text-align:center;}
+.logo-big h1{font-size:2.8rem;font-weight:900;font-style:italic;transform:rotate(-5deg);display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--green),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:3px;}
+.setup-card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:450px;}
+.setup-card h2{color:var(--cyan);text-align:center;margin-bottom:20px;font-size:1.2rem;}
+.ig{margin-bottom:13px;}
+.ig label{font-size:0.78rem;color:var(--muted);display:block;margin-bottom:4px;}
+.ig input{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:11px 15px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.95rem;}
+.ig input:focus{outline:none;border-color:var(--cyan);}
+.btn-start{width:100%;background:linear-gradient(135deg,var(--cyan),var(--green));color:#000;border:none;border-radius:12px;padding:14px;font-size:1.1rem;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:8px;transition:all 0.2s;}
+.btn-start:hover{transform:translateY(-2px);}
+
+/* WORD SETUP */
+#wsScreen{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:200;align-items:center;justify-content:center;padding:20px;}
+#wsScreen.show{display:flex;}
+.ws-card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:440px;}
+.ws-card h2{color:var(--cyan);text-align:center;margin-bottom:18px;}
+
+/* JOIN REQUESTS */
+#joinScreen{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:300;align-items:center;justify-content:center;padding:20px;}
+#joinScreen.show{display:flex;}
+.join-card{background:var(--panel);border:2px solid var(--cyan);border-radius:20px;padding:28px;width:100%;max-width:420px;text-align:center;}
+.join-card h2{color:var(--cyan);margin-bottom:6px;}
+.join-card p{color:var(--muted);margin-bottom:20px;font-size:0.9rem;}
+.join-name{font-size:1.8rem;font-weight:900;color:var(--yellow);margin-bottom:18px;}
+.join-btns{display:flex;gap:12px;justify-content:center;}
+.players-waiting{margin-top:14px;display:flex;flex-direction:column;gap:7px;}
+.pw-item{background:var(--panel2);border:1px solid var(--green);border-radius:10px;padding:10px 16px;color:var(--green);font-weight:700;text-align:right;}
+
+/* GAME */
+#gameScreen{display:none;padding:14px;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:10px 16px;margin-bottom:13px;}
+.logo-sm{font-size:1.3rem;font-weight:900;font-style:italic;transform:rotate(-3deg);display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--green),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.rdots{display:flex;gap:5px;}
+.rdot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted);}
+.rdot.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,0.1);}
+.rdot.done{border-color:var(--green);color:var(--green);}
+
+/* Players bar */
+.players-row{display:flex;gap:9px;margin-bottom:13px;}
+.pcard{flex:1;background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:11px;text-align:center;cursor:pointer;position:relative;transition:all 0.3s;}
+.pcard.active{border-color:var(--cyan);background:rgba(0,229,255,0.07);box-shadow:0 0 16px rgba(0,229,255,0.2);}
+.pname{font-size:0.85rem;font-weight:700;margin-bottom:2px;}
+.prnd{font-size:1.3rem;font-weight:900;color:var(--yellow);}
+.ptotl{font-size:0.68rem;color:var(--muted);}
+.ptotv{font-size:0.88rem;font-weight:700;color:var(--green);}
+.active-lbl{position:absolute;top:-8px;left:50%;transform:translateX(50%);background:var(--cyan);color:#000;font-size:0.58rem;font-weight:900;padding:2px 7px;border-radius:20px;}
+.helper-btn{background:var(--yellow);color:#000;border:none;border-radius:8px;padding:3px 8px;font-size:0.62rem;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:3px;}
+
+/* Main grid */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+
+/* Wheel */
+.wbox{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:9px;}
+.wwrap{position:relative;}
+.wptr{position:absolute;top:-16px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:28px solid var(--yellow);z-index:10;filter:drop-shadow(0 2px 8px rgba(255,234,0,0.9));}
+.spin-res{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:7px 18px;text-align:center;width:100%;}
+.spin-res .lbl{font-size:0.68rem;color:var(--muted);}
+.spin-res .val{font-size:1.25rem;font-weight:900;color:var(--yellow);min-height:26px;}
+
+/* Word box */
+.wordbox{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.cat-tag{display:inline-block;background:rgba(0,229,255,0.1);border:1px solid var(--cyan);color:var(--cyan);font-size:0.73rem;padding:3px 12px;border-radius:20px;text-align:center;}
+
+/* ARABIC WORD DISPLAY - GRID SYSTEM */
+.wdisp{background:var(--panel2);border-radius:10px;padding:8px 6px;min-height:75px;display:flex;flex-direction:column;gap:4px;justify-content:center;align-items:center;}
+.word-grid{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;direction:rtl;padding:2px;}
+.wg-cell{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.3s;}
+.wg-cell.letter-hidden{background:#0a1628;border:2px solid #1a3a6a;}
+.wg-cell.letter-revealed{background:#0a1628;border:2px solid #1a3a6a;}
+.wg-cell.letter-flash{background:#7dd3fc;border:2px solid #38bdf8;animation:cellFlash 2s ease;}
+.wg-cell.space-cell{background:#fff;border:2px solid #ddd;border-radius:8px;}
+.wg-char{font-size:1.1rem;font-weight:800;color:#fff;font-family:'Changa','Cairo',sans-serif;}
+.wg-logo{width:22px;height:22px;opacity:0.55;}
+@keyframes cellFlash{0%{background:#7dd3fc;border-color:#38bdf8;}60%{background:#38bdf8;border-color:#0ea5e9;}100%{background:#0a1628;border-color:#1a3a6a;}}
+
+.vowel-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+.vlbl{font-size:0.68rem;color:var(--muted);width:100%;margin-bottom:2px;}
+.btn-v{background:rgba(255,234,0,0.1);border:1px solid var(--yellow);color:var(--yellow);border-radius:7px;padding:4px 9px;font-size:0.9rem;font-family:'Cairo',sans-serif;cursor:pointer;font-weight:700;}
+.btn-v:hover{background:rgba(255,234,0,0.22);}
+.btn-v:disabled{opacity:0.3;cursor:not-allowed;}
+.letter-row{display:flex;gap:7px;align-items:center;}
+.letter-in{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:1.05rem;font-family:'Cairo',sans-serif;width:52px;text-align:center;}
+.letter-in:focus{outline:none;border-color:var(--cyan);}
+
+/* Controls */
+.ctrlbox{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px;grid-column:1/-1;}
+.ctrl-lbl{font-size:0.75rem;color:var(--muted);margin-bottom:9px;}
+.ctrl-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
+.btn{border:none;border-radius:9px;padding:7px 14px;font-family:'Cairo',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all 0.18s;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-c{background:var(--cyan);color:#000;}
+.btn-g{background:var(--green);color:#000;}
+.btn-y{background:var(--yellow);color:#000;}
+.btn-r{background:var(--red);color:#fff;}
+.btn-o{background:var(--orange);color:#fff;}
+.btn-p{background:var(--purple);color:#fff;}
+.btn-gr{background:#2a2a4a;color:#fff;border:1px solid var(--border);}
+.turn-tag{background:rgba(0,229,255,0.1);border:1px solid var(--cyan);color:var(--cyan);border-radius:8px;padding:5px 12px;font-size:0.82rem;font-weight:700;}
+
+/* Big X */
+.bigx{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:600;align-items:center;justify-content:center;pointer-events:none;}
+.bigx.show{display:flex;}
+.xi{font-size:10rem;color:var(--red);font-weight:900;text-shadow:0 0 50px rgba(255,23,68,0.9);animation:xpop 0.3s ease;}
+@keyframes xpop{0%{transform:scale(0.2);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+
+/* Overlays */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:400;align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.ov{background:var(--panel);border:2px solid var(--border);border-radius:18px;padding:30px;text-align:center;max-width:370px;width:90%;}
+.ov h2{font-size:1.6rem;font-weight:900;margin-bottom:10px;}
+.ov p{color:var(--muted);margin-bottom:18px;font-size:0.9rem;}
+.ov-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.dbl-in{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px;font-size:1.4rem;font-family:'Cairo',sans-serif;width:80px;text-align:center;margin:12px auto;display:block;}
+
+/* Helper card overlay */
+#helperCard{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;align-items:center;justify-content:center;}
+#helperCard.show{display:flex;}
+.hc-inner{background:var(--panel);border:3px solid var(--yellow);border-radius:22px;padding:35px;text-align:center;max-width:360px;width:90%;}
+.hc-inner h2{color:var(--yellow);font-size:1.7rem;margin-bottom:8px;}
+.hc-inner p{color:var(--muted);margin-bottom:22px;}
+.hc-inner .player-name-hc{font-size:1.3rem;font-weight:700;color:var(--cyan);margin-bottom:20px;}
+
+/* Round transition */
+.rtrans{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:350;flex-direction:column;align-items:center;justify-content:center;gap:18px;}
+.rtrans.show{display:flex;}
+.rtrans h1{font-size:2.2rem;font-weight:900;color:var(--cyan);}
+.ssum{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+.ss{background:var(--panel2);border:1px solid var(--border);border-radius:13px;padding:18px 26px;text-align:center;}
+.ss-n{font-size:0.88rem;color:var(--muted);}
+.ss-r{font-size:1.9rem;font-weight:900;color:var(--yellow);}
+.ss-t{font-size:0.88rem;color:var(--green);}
+
+/* Final */
+#finalScreen{display:none;position:fixed;inset:0;background:var(--bg);z-index:450;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:28px;}
+#finalScreen.show{display:flex;}
+.podium{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:flex-end;}
+.pod{background:var(--panel);border:2px solid var(--border);border-radius:15px;padding:22px 30px;text-align:center;}
+.pod.p1{border-color:var(--yellow);box-shadow:0 0 28px rgba(255,234,0,0.3);}
+
+/* Fishing */
+.fishbox{display:none;grid-column:1/-1;background:var(--panel);border:2px solid var(--green);border-radius:13px;padding:20px;text-align:center;}
+.fish-t{font-size:1.05rem;color:var(--green);font-weight:700;margin-bottom:10px;}
+.fish-grid-wrap{min-height:52px;direction:rtl;margin-bottom:8px;}
+.fish-btns{display:flex;gap:9px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+
+/* Special info */
+.spec-info{display:none;margin-top:9px;background:rgba(255,234,0,0.07);border:1px solid var(--yellow);border-radius:8px;padding:7px 12px;font-size:0.8rem;color:var(--yellow);}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setupScreen">
+  <div class="logo-big">
+    <svg width="95" height="95" viewBox="0 0 120 120" style="display:block;margin:0 auto 8px">
+      <circle cx="60" cy="60" r="55" fill="none" stroke="#1e1e4a" stroke-width="3"/>
+      <path d="M60,5 A55,55 0 0,1 115,60" fill="none" stroke="#00e5ff" stroke-width="8" stroke-linecap="round"/>
+      <path d="M115,60 A55,55 0 0,1 60,115" fill="none" stroke="#00ff88" stroke-width="8" stroke-linecap="round"/>
+      <path d="M60,115 A55,55 0 0,1 5,60" fill="none" stroke="#ffea00" stroke-width="8" stroke-linecap="round"/>
+      <path d="M5,60 A55,55 0 0,1 60,5" fill="none" stroke="#ff6d00" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="60" cy="60" r="16" fill="#050510" stroke="#00e5ff" stroke-width="2"/>
+      <text x="60" y="65" text-anchor="middle" font-size="10" font-weight="900" font-family="Cairo" fill="white" transform="rotate(-5,60,60)">عجلة</text>
+    </svg>
+    <h1>العجلة</h1>
+  </div>
+  <div class="setup-card">
+    <h2>إعداد اللعبة</h2>
+    <p style="color:var(--muted);font-size:0.85rem;text-align:center;margin-bottom:18px">اضغط ابدأ وسيدخل اللاعبون من أجهزتهم</p>
+    <button class="btn-start" onclick="startLobby()">ابدأ وانتظر اللاعبين 🎡</button>
+  </div>
+</div>
+
+<!-- JOIN REQUESTS -->
+<div id="joinScreen">
+  <div class="join-card">
+    <h2>🔔 طلب انضمام</h2>
+    <p>يريد الانضمام للعبة:</p>
+    <div class="join-name" id="joinNameDisplay">-</div>
+    <div class="join-btns">
+      <button class="btn btn-g" onclick="approveJoin()">✓ موافقة</button>
+      <button class="btn btn-r" onclick="rejectJoin()">✗ رفض</button>
+    </div>
+    <div class="players-waiting" id="playersWaiting"></div>
+    <div style="margin-top:16px">
+      <button class="btn btn-y" id="btnStartGame" onclick="startGame()" style="display:none;padding:12px 30px;font-size:1rem">ابدأ اللعبة ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORD SETUP -->
+<div id="wsScreen">
+  <div class="ws-card">
+    <h2 id="wsTitle">إعداد الجولة</h2>
+    <div class="ig"><label>الفئة</label><input id="wsC" placeholder="مثال: رياضة، أماكن..."/></div>
+    <div class="ig"><label>العبارة أو الكلمة</label><input id="wsW" placeholder="اكتب العبارة هنا"/></div>
+    <button class="btn-start" onclick="confirmWord()">تأكيد وابدأ ✓</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen">
+  <div class="top-bar">
+    <span class="logo-sm">العجلة</span>
+    <div class="rdots">
+      <div class="rdot" id="rd0">١</div><div class="rdot" id="rd1">٢</div>
+      <div class="rdot" id="rd2">٣</div><div class="rdot" id="rd3">٤</div><div class="rdot" id="rd4">٥</div>
+    </div>
+    <span id="rndLbl" style="font-size:0.82rem;color:var(--cyan);font-weight:700"></span>
+  </div>
+
+  <div class="players-row" id="playersRow"></div>
+
+  <div class="mgrid">
+    <!-- Wheel -->
+    <div class="wbox" id="wbox">
+      <div class="wwrap">
+        <div class="wptr"></div>
+        <canvas id="wc" width="300" height="300"></canvas>
+      </div>
+      <div class="spin-res"><div class="lbl">النتيجة</div><div class="val" id="sval">-</div></div>
+    </div>
+
+    <!-- Word -->
+    <div class="wordbox" id="wordbox">
+      <span class="cat-tag" id="catDisp">الفئة</span>
+      <div class="wdisp" id="wdisp"></div>
+      <div class="vowel-row">
+        <span class="vlbl">حروف العلة (25 نقطة - قبل اللفة):</span>
+        <button class="btn-v" id="vA" onclick="useVowel('alef')">أ</button>
+        <button class="btn-v" id="vW" onclick="useVowel('waw')">و</button>
+        <button class="btn-v" id="vY" onclick="useVowel('ya')">ي</button>
+      </div>
+      <div class="letter-row">
+        <input class="letter-in" id="lin" placeholder="ح" maxlength="2" disabled/>
+        <button class="btn btn-c" id="bGuess" onclick="guessLetter()" disabled>خمّن حرف</button>
+        <button class="btn btn-g" id="bSolve" onclick="solveFull()" disabled>حل العبارة</button>
+      </div>
+    </div>
+
+    <!-- Fishing -->
+    <div class="fishbox" id="fishbox">
+      <div class="fish-t" id="fishT">🎣 جولة الصيد</div>
+      <div class="fish-grid-wrap" id="fishGridWrap"></div>
+      <div class="fish-btns">
+        <button class="btn btn-gr" onclick="revealNextFish()">اكشف حرف</button>
+        <button class="btn btn-r" onclick="revealAllFish()">كشف الكل</button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="ctrlbox">
+      <div class="ctrl-lbl">أدوات التحكم</div>
+      <div class="ctrl-row">
+        <span class="turn-tag" id="turnTag">دور اللاعب</span>
+        <button class="btn btn-c" onclick="nextTurn()">▶ التالي</button>
+        <button class="btn btn-r" id="bBnk" onclick="doBankrupt()" style="display:none">💀 إفلاس</button>
+        <button class="btn btn-gr" id="bLose" onclick="doLose()" style="display:none">⏭ راحت عليك</button>
+        <button class="btn btn-o" id="bChal" onclick="openChal()" style="display:none">🎯 تحدي</button>
+        <button class="btn btn-p" id="bDbl" onclick="openDbl()" style="display:none">🎲 عطيناك ثنتين</button>
+        <button class="btn btn-y" id="bHelp" onclick="triggerHelper()" style="display:none">🃏 وسيلة مساعدة</button>
+        <button class="btn btn-gr" onclick="resetSpin()">↺ إعادة</button>
+        <button class="btn btn-g" onclick="endRound()">انتهاء الجولة →</button>
+      </div>
+      <div class="spec-info" id="specInfo">⭐ الجولة الخاصة - كل لاعب يحصل نقاطه المجمعة بعد حل العبارة</div>
+    </div>
+  </div>
+</div>
+
+<!-- BIG X -->
+<div class="bigx" id="bigx"><div class="xi">✗</div></div>
+
+<!-- HELPER CARD -->
+<div id="helperCard">
+  <div class="hc-inner">
+    <h2>🃏 وسيلة المساعدة</h2>
+    <div class="player-name-hc" id="helperPlayerName">اللاعب</div>
+    <p>استخدام وسيلة المساعدة يكشف حرف علة مجاناً</p>
+    <div class="ov-btns">
+      <button class="btn btn-g" onclick="confirmHelper()">✓ تم الاستخدام</button>
+      <button class="btn btn-r" onclick="cancelHelper()">✗ لا - إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHALLENGE -->
+<div class="overlay" id="chalOv">
+  <div class="ov">
+    <h2 style="color:var(--orange)">🎯 تحدي!</h2>
+    <p id="chalNm">هل نجح اللاعب؟</p>
+    <div class="ov-btns">
+      <button class="btn btn-g" onclick="chalRes(true)">✓ نجح - خمّن حرف</button>
+      <button class="btn btn-r" onclick="chalRes(false)">✗ فشل - خصم 25</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOUBLE -->
+<div class="overlay" id="dblOv">
+  <div class="ov">
+    <h2 style="color:var(--purple)">🎲 عطيناك ثنتين!</h2>
+    <p id="dblNm">محاولتان - كل حرف صح = 25 نقطة</p>
+    <input class="dbl-in" id="dblIn" placeholder="ح" maxlength="2"/>
+    <div class="ov-btns" style="flex-direction:column;gap:7px">
+      <button class="btn btn-c" id="dblBtn" onclick="dblGuess()">المحاولة الأولى</button>
+      <button class="btn btn-gr" onclick="closeDbl()">إغلاق</button>
+    </div>
+    <div id="dblSt" style="margin-top:9px;color:var(--muted);font-size:0.83rem"></div>
+  </div>
+</div>
+
+<!-- ROUND TRANSITION -->
+<div class="rtrans" id="rtrans">
+  <h1 id="transT">انتهت الجولة!</h1>
+  <div class="ssum" id="ssum"></div>
+  <button class="btn btn-c" onclick="goNext()" style="padding:12px 34px;font-size:0.95rem">الجولة التالية →</button>
+</div>
+
+<!-- FINAL -->
+<div id="finalScreen">
+  <h1 style="font-size:2rem;font-weight:900;color:var(--yellow)">🏆 انتهت اللعبة!</h1>
+  <div class="podium" id="podium"></div>
+  <button class="btn btn-gr" onclick="location.reload()" style="padding:10px 26px">لعبة جديدة</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const FB = {
+  apiKey:"AIzaSyASPPu2V3ZPeJOMTYK_1A-1LxJz-CFFCmc",
+  authDomain:"al-ajala.firebaseapp.com",
+  databaseURL:"https://al-ajala-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"al-ajala",storageBucket:"al-ajala.firebasestorage.app",
+  messagingSenderId:"634499303447",appId:"1:634499303447:web:4a6a6841db4652ab083452"
+};
+const app = initializeApp(FB);
+const db = getDatabase(app);
+
+// ===== SLICES =====
+const BASE = [
+  {l:'100',v:100,c:'#1565C0'},{l:'35',v:35,c:'#2E7D32'},{l:'200',v:200,c:'#6A1B9A'},
+  {l:'25',v:25,c:'#00838F'},{l:'35',v:35,c:'#1565C0'},{l:'45',v:45,c:'#2E7D32'},
+  {l:'15',v:15,c:'#AD1457'},{l:'100',v:100,c:'#E65100'},{l:'20',v:20,c:'#1565C0'},
+  {l:'50',v:50,c:'#2E7D32'},{l:'25',v:25,c:'#6A1B9A'},{l:'40',v:40,c:'#00838F'},
+  {l:'20',v:20,c:'#AD1457'},{l:'45',v:45,c:'#E65100'},{l:'30',v:30,c:'#1565C0'},{l:'50',v:50,c:'#2E7D32'},
+  {l:'راحت عليك',v:'lose',c:'#37474F',fx:true},{l:'راحت عليك',v:'lose',c:'#37474F',fx:true},
+  {l:'إفلاس',v:'bankrupt',c:'#B71C1C',fx:true},
+  {l:'عطيناك ثنتين',v:'double',c:'#4527A0',fx:true},
+  {l:'وسيلة مساعدة',v:'helper',c:'#00695C',fx:true},
+  {l:'تحدي',v:'challenge',c:'#BF360C',fx:true},{l:'تحدي',v:'challenge',c:'#BF360C',fx:true}
+];
+// أرقام فقط للجولة الخاصة
+const BASE_SPECIAL = [
+  {l:'100',v:100,c:'#1565C0'},{l:'35',v:35,c:'#2E7D32'},{l:'200',v:200,c:'#6A1B9A'},
+  {l:'25',v:25,c:'#00838F'},{l:'35',v:35,c:'#1565C0'},{l:'45',v:45,c:'#2E7D32'},
+  {l:'15',v:15,c:'#AD1457'},{l:'100',v:100,c:'#E65100'},{l:'20',v:20,c:'#1565C0'},
+  {l:'50',v:50,c:'#2E7D32'},{l:'25',v:25,c:'#6A1B9A'},{l:'40',v:40,c:'#00838F'},
+  {l:'20',v:20,c:'#AD1457'},{l:'45',v:45,c:'#E65100'},{l:'30',v:30,c:'#1565C0'},{l:'50',v:50,c:'#2E7D32'},
+  {l:'100',v:100,c:'#1565C0'},{l:'35',v:35,c:'#2E7D32'},{l:'200',v:200,c:'#6A1B9A'},
+  {l:'25',v:25,c:'#00838F'},{l:'50',v:50,c:'#2E7D32'},{l:'100',v:100,c:'#E65100'},{l:'40',v:40,c:'#00838F'}
+];
+
+function shuffle(arr) {
+  const fx = arr.filter(s=>s.fx), pts = arr.filter(s=>!s.fx);
+  for(let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
+  const res=[...pts];
+  fx.forEach(f=>{const p=Math.floor(Math.random()*(res.length+1));res.splice(p,0,f);});
+  return res;
+}
+
+// ===== CONSTANTS =====
+const RT = ['wheel','fish','fish','wheel','special'];
+const RN = ['الجولة الأولى 🎡','جولة الصيد (50 نقطة) 🎣','جولة الصيد (100 نقطة) 🎣','الجولة الرابعة 🎡','الجولة الخاصة ⭐'];
+const ALEF = ['ا','أ','إ','آ','ئ','ى'];
+const YA = ['ي','ى'];
+const WAW = ['و'];
+const ALL_VOWELS = [...ALEF, ...YA, ...WAW];
+
+// ===== STATE =====
+let G = {
+  players: [],
+  round: 0, turn: 0, word: '', cat: '', revealed: [], slices: [],
+  phase: 'idle', spinResult: null, dblAtt: 0, fishInt: null,
+  vowelPhase: true,
+  solverIndex: -1,
+  guessedLetters: [],   // حروف تم تخمينها في هذه الجولة (صح أو غلط)
+  specialVal: 0,        // قيمة الحرف في الجولة الخاصة
+  specialTurnOrder: [], // ترتيب اللاعبين في الجولة الخاصة
+  specialTurnIdx: 0,    // من دوره الآن في الجولة الخاصة
+  fishBuzzerPlayer: -1, // من ضغط الزر في الصيد
+  fishUsedPlayers: [],  // اللاعبين الذين استخدموا محاولتهم في الصيد
+};
+
+// ===== JOIN SYSTEM =====
+let pendingJoins = [], approvedPlayers = [], pendingQueue = [];
+
+window.startLobby = function() {
+  // Clear DB state and open lobby
+  set(ref(db,'game'), {phase:'lobby', players:[], ts:Date.now()});
+  set(ref(db,'joinReqs'), null);
+  set(ref(db,'spinReq'), null);
+  approvedPlayers = [];
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('joinScreen').classList.add('show');
+  renderWaiting();
+};
+
+// Listen for join requests
+onValue(ref(db,'joinReqs'), snap => {
+  const data = snap.val();
+  if (!data) return;
+  pendingQueue = Object.entries(data).map(([k,v])=>({key:k,...v}));
+  showNextJoin();
+});
+
+function showNextJoin() {
+  // Filter out already approved
+  const pending = pendingQueue.filter(p => !approvedPlayers.find(a=>a.key===p.key));
+  if (pending.length > 0 && !document.getElementById('joinScreen').classList.contains('show')) {
+    document.getElementById('joinScreen').classList.add('show');
+  }
+  if (pending.length > 0) {
+    const next = pending[0];
+    document.getElementById('joinNameDisplay').textContent = next.name;
+    window._currentJoin = next;
+  }
+}
+
+window.approveJoin = function() {
+  if (!window._currentJoin) return;
+  if (approvedPlayers.length >= 3) { alert('الحد الأقصى 3 لاعبين'); rejectJoin(); return; }
+  approvedPlayers.push(window._currentJoin);
+  // Remove from DB
+  remove(ref(db,'joinReqs/'+window._currentJoin.key));
+  window._currentJoin = null;
+  renderWaiting();
+  // Push approved list to DB
+  const pList = approvedPlayers.map((p,i)=>({name:p.name,rpts:[0,0,0,0,0],total:0,helper:false,active:i===0,idx:i}));
+  set(ref(db,'game'),{phase:'lobby',players:pList,ts:Date.now()});
+  if (approvedPlayers.length >= 2) document.getElementById('btnStartGame').style.display = 'inline-block';
+};
+
+window.rejectJoin = function() {
+  if (!window._currentJoin) return;
+  remove(ref(db,'joinReqs/'+window._currentJoin.key));
+  window._currentJoin = null;
+};
+
+function renderWaiting() {
+  const el = document.getElementById('playersWaiting');
+  el.innerHTML = '';
+  approvedPlayers.forEach((p,i) => {
+    const d = document.createElement('div');
+    d.className = 'pw-item';
+    d.textContent = `✓ لاعب ${i+1}: ${p.name}`;
+    el.appendChild(d);
+  });
+  const rem = 3 - approvedPlayers.length;
+  if (rem > 0) {
+    const d = document.createElement('div');
+    d.style.cssText = 'color:var(--muted);font-size:0.82rem;text-align:center;margin-top:6px;';
+    d.textContent = `⏳ ينتظر ${rem} لاعب${rem>1?'ين':''} للانضمام...`;
+    el.appendChild(d);
+  }
+}
+
+window.startGame = function() {
+  if (approvedPlayers.length < 2) { alert('تحتاج لاعبين على الأقل'); return; }
+  // Fill to 3 if less
+  while (approvedPlayers.length < 3) approvedPlayers.push({name:`لاعب ${approvedPlayers.length+1}`, key:'bot'});
+  G.players = approvedPlayers.map(p=>({name:p.name,rpts:[0,0,0,0,0],total:0,helper:false}));
+  document.getElementById('joinScreen').classList.remove('show');
+  document.getElementById('gameScreen').style.display = 'block';
+  initRound(0);
+};
+
+// ===== CANVAS =====
+const canvas = document.getElementById('wc');
+let wAng = 0, spinning = false;
+
+// High-DPI canvas setup
+function setupHiDPI(canvas, size){
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=size*dpr; canvas.height=size*dpr;
+  canvas.style.width=size+'px'; canvas.style.height=size+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  return ctx;
+}
+const WS=300; // display size
+let hCtx=setupHiDPI(canvas,WS);
+
+function drawWheel() {
+  const W=WS,cx=W/2,cy=W/2,r=W/2-3;
+  hCtx.clearRect(0,0,W,W);
+  const sl=G.slices,n=sl.length,arc=2*Math.PI/n;
+  for(let i=0;i<n;i++){
+    const s=wAng+i*arc-Math.PI/2,e=s+arc;
+    // Slice fill
+    hCtx.beginPath();hCtx.moveTo(cx,cy);hCtx.arc(cx,cy,r,s,e);hCtx.closePath();
+    hCtx.fillStyle=sl[i].c;hCtx.fill();
+    hCtx.strokeStyle='rgba(0,0,0,0.35)';hCtx.lineWidth=1.5;hCtx.stroke();
+    // Text
+    hCtx.save();
+    hCtx.translate(cx,cy);
+    hCtx.rotate(s+arc/2);
+    hCtx.textAlign='right';
+    hCtx.fillStyle='#FFFFFF';
+    hCtx.shadowColor='rgba(0,0,0,0.8)';
+    hCtx.shadowBlur=3;
+    const lbl=sl[i].l;
+    let fs,fw;
+    if(lbl.length>5){fs=7.5;fw='700';}
+    else if(lbl.length>3){fs=9;fw='800';}
+    else{fs=12;fw='800';}
+    hCtx.font=`${fw} ${fs}px 'Changa','Cairo',sans-serif`;
+    hCtx.fillText(lbl,r-6,fs*0.38);
+    hCtx.restore();
+  }
+  // Center hub
+  const hr=W*0.1;
+  hCtx.beginPath();hCtx.arc(cx,cy,hr,0,2*Math.PI);
+  const grad=hCtx.createRadialGradient(cx,cy,0,cx,cy,hr);
+  grad.addColorStop(0,'#1a1a3e');grad.addColorStop(1,'#050510');
+  hCtx.fillStyle=grad;hCtx.fill();
+  hCtx.strokeStyle='#00e5ff';hCtx.lineWidth=2.5;hCtx.stroke();
+  hCtx.fillStyle='#fff';
+  hCtx.font=`800 ${Math.floor(hr*0.6)}px 'Changa','Cairo',sans-serif`;
+  hCtx.textAlign='center';hCtx.shadowColor='rgba(0,0,0,0.9)';hCtx.shadowBlur=2;
+  hCtx.fillText('عجلة',cx,cy+hr*0.22);
+  hCtx.shadowBlur=0;
+}
+
+function spinWheel() {
+  if(spinning)return;
+  if(G.phase==='guess'||G.phase==='special_guess'){showToastHost('خمّن حرف أولاً!');return;}
+  spinning=true;
+  const tot=(5+Math.random()*6)*2*Math.PI,dur=3000+Math.random()*2000;
+  const s0=wAng,t0=performance.now();
+  // أبلغ اللاعبين أن العجلة تدور بنفس المعلمات
+  set(ref(db,'spinSync'),{startAngle:s0,totalAngle:tot,duration:dur,ts:Date.now()});
+  function go(now){
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,4);
+    wAng=s0+tot*e;drawWheel();
+    if(p<1)requestAnimationFrame(go);
+    else{spinning=false;handleSpin();sync();}
+  }
+  requestAnimationFrame(go);
+}
+canvas.onclick=()=>{
+  if(document.querySelector('.overlay.show,#helperCard.show'))return;
+  if(!spinning&&G.phase==='idle')spinWheel();
+  else if(G.phase==='guess'||G.phase==='special_guess')showToastHost('خمّن حرف أولاً!');
+};
+
+function handleSpin(){
+  const n=G.slices.length,arc=2*Math.PI/n;
+  let a=((-wAng%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  const idx=Math.floor(a/arc)%n,sl=G.slices[idx];
+  G.spinResult={sl,idx};
+  setVowels(false);
+  document.getElementById('sval').textContent=sl.l;
+  hideAct();
+  const v=sl.v;
+  if(v==='bankrupt')  {G.phase='spun';document.getElementById('bBnk').style.display='inline-block';}
+  else if(v==='lose') {G.phase='spun';document.getElementById('bLose').style.display='inline-block';}
+  else if(v==='challenge'){G.phase='spun';document.getElementById('bChal').style.display='inline-block';}
+  else if(v==='double')   {G.phase='spun';document.getElementById('bDbl').style.display='inline-block';}
+  else if(v==='helper'){
+    // وسيلة المساعدة: لازم تخمين صحيح أولاً - نفعّل التخمين
+    G.phase='guess';
+    G.pendingHelper=true; // flag: إذا جاوب صح يحصل الوسيلة
+    enableGuess();
+    showToastHost('وسيلة المساعدة - اللاعب يجب أن يخمن حرف صحيح أولاً');
+  }
+  else if(RT[G.round]==='special'){
+    // الجولة الخاصة - قيمة = الرقم + 100
+    G.specialVal=(typeof sl.v==='number'?sl.v:50)+100;
+    document.getElementById('sval').textContent=`${sl.l} + 100 = ${G.specialVal}`;
+    showToastHost(`✅ قيمة الحرف: ${G.specialVal} نقطة لكل حرف`);
+    // أخفِ العجلة وأظهر الكلمة على امتداد الشاشة
+    const wbox=document.getElementById('wbox');
+    const wordbox=document.getElementById('wordbox');
+    wbox.style.display='none';
+    wordbox.style.display='flex';
+    wordbox.style.gridColumn='1/-1';
+    wordbox.style.maxWidth='100%';
+    document.getElementById('specInfo').textContent=`⭐ قيمة الحرف: ${G.specialVal} نقطة | كل لاعب يخمن مرة بالدور`;
+    G.phase='special_guess';
+    G.specialTurnOrder=[0,1,2];
+    G.specialTurnIdx=0;
+    G.turn=0;
+    G.guessedLetters=[];
+    renderWord();
+    renderPlayers();
+    enableGuess();
+    document.getElementById('turnTag').textContent=`دور: ${G.players[0].name}`;
+  }
+  else{G.phase='guess';enableGuess();}
+  sync();
+}
+
+function hideAct(){['bBnk','bLose','bChal','bDbl','bHelp'].forEach(id=>document.getElementById(id).style.display='none');}
+function enableGuess(){document.getElementById('lin').disabled=false;document.getElementById('bGuess').disabled=false;document.getElementById('bSolve').disabled=false;}
+function disableGuess(){document.getElementById('lin').disabled=true;document.getElementById('bGuess').disabled=true;document.getElementById('bSolve').disabled=true;}
+function setVowels(on){['vA','vW','vY'].forEach(id=>document.getElementById(id).disabled=!on);}
+
+// ===== ARABIC HELPERS =====
+function normCh(ch){if(ALEF.includes(ch))return '__a__';if(YA.includes(ch))return '__y__';if(WAW.includes(ch))return '__w__';return ch;}
+function isRev(ch){const n=normCh(ch);return G.revealed.some(r=>normCh(r)===n);}
+function isVowel(ch){return ALL_VOWELS.includes(ch);}
+function addRev(ch){
+  const n=normCh(ch);if(G.revealed.some(r=>normCh(r)===n))return;
+  if(n==='__a__')ALEF.forEach(a=>{if(!G.revealed.includes(a))G.revealed.push(a);});
+  else if(n==='__y__')YA.forEach(y=>{if(!G.revealed.includes(y))G.revealed.push(y);});
+  else if(n==='__w__')WAW.forEach(w=>{if(!G.revealed.includes(w))G.revealed.push(w);});
+  else G.revealed.push(ch);
+}
+function countCh(ch){let c=0;const n=normCh(ch);for(let x of G.word){if(x!==' '&&normCh(x)===n)c++;}return c;}
+function wordDone(){for(let ch of G.word){if(ch!==' '&&!isRev(ch))return false;return true;}}
+
+// ===== LOGO SVG =====
+const LOGO_SVG=`<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="52" fill="none" stroke="#1a5fa8" stroke-width="6"/><path d="M60,8 A52,52 0 0,1 112,60" fill="none" stroke="#1a5fa8" stroke-width="10" stroke-linecap="round"/><path d="M112,60 A52,52 0 0,1 60,112" fill="none" stroke="#1565a0" stroke-width="10" stroke-linecap="round"/><path d="M60,112 A52,52 0 0,1 8,60" fill="none" stroke="#1a5fa8" stroke-width="10" stroke-linecap="round"/><path d="M8,60 A52,52 0 0,1 60,8" fill="none" stroke="#1565a0" stroke-width="10" stroke-linecap="round"/><circle cx="60" cy="60" r="15" fill="none" stroke="#1a5fa8" stroke-width="4"/><text x="60" y="65" text-anchor="middle" font-size="9" font-weight="900" font-family="Changa,Cairo" fill="#1a5fa8">عجلة</text></svg>`;
+
+// ===== WORD RENDER - GRID =====
+function renderWord(flashChar=null){
+  const el=document.getElementById('wdisp');el.innerHTML='';
+  if(!G.word)return;
+  const chars=[...G.word];
+  const row=document.createElement('div');row.className='word-grid';
+  chars.forEach(ch=>{
+    const cell=document.createElement('div');
+    if(ch===' '){
+      cell.className='wg-cell space-cell';
+      cell.innerHTML=`<div class="wg-logo">${LOGO_SVG}</div>`;
+    } else {
+      const rev=isRev(ch);
+      const isFlash=flashChar&&normCh(ch)===normCh(flashChar);
+      cell.className='wg-cell '+(isFlash?'letter-flash':(rev?'letter-revealed':'letter-hidden'));
+      if(rev){const s=document.createElement('span');s.className='wg-char';s.textContent=ch;cell.appendChild(s);}
+      else{cell.innerHTML=`<div class="wg-logo">${LOGO_SVG}</div>`;}
+    }
+    row.appendChild(cell);
+  });
+  el.appendChild(row);
+}
+
+function flashRevealChar(ch){
+  renderWord(ch);
+  setTimeout(()=>renderWord(),2000);
+}
+
+// ===== GUESS =====
+window.guessLetter = function(){
+  const inp=document.getElementById('lin'),letter=inp.value.trim();
+  if(!letter)return;inp.value='';
+  if(isVowel(letter)){showToastHost('حروف العلة لا تُخمَّن - استخدم أزرار حروف العلة');return;}
+
+  // منع تكرار الحرف المُخمَّن في نفس الجولة
+  const normL=normCh(letter);
+  if(G.guessedLetters.some(gl=>normCh(gl)===normL)){
+    showX();showToastHost(`"${letter}" تم تخمينه مسبقاً!`);
+    disableGuess();
+    if(G.phase==='special_guess') specialNextTurn();
+    else setTimeout(()=>nextTurn(),1500);
+    sync();return;
+  }
+  G.guessedLetters.push(letter);
+
+  // الجولة الخاصة - كل لاعب يخمن مرة بالدور
+  if(G.phase==='special_guess'){
+    const cnt=countCh(letter);
+    const activeTurn=G.specialTurnOrder[G.specialTurnIdx];
+    if(cnt>0){
+      addRev(letter);
+      G.players[activeTurn].rpts[G.round]+=G.specialVal*cnt;
+      updTot();renderPlayers();flashRevealChar(letter);
+      setTimeout(()=>{
+        if(wordDone()){G.solverIndex=-1;disableGuess();sync();}
+        else specialNextTurn();
+      },2100);
+    } else {
+      showX();
+      setTimeout(()=>specialNextTurn(),1200);
+    }
+    sync();return;
+  }
+
+  const cnt=countCh(letter);
+  if(cnt>0){
+    addRev(letter);
+    const pts=G.spinResult?.sl?.v;
+    if(typeof pts==='number') G.players[G.turn].rpts[G.round]+=pts*cnt;
+    updTot();renderPlayers();
+    flashRevealChar(letter);
+    // وسيلة المساعدة في الانتظار - أعطِ اللاعب الزر
+    if(G.pendingHelper){
+      G.pendingHelper=false;
+      G.players[G.turn].helper=true;
+      const hi=G.slices.findIndex(s=>s.v==='helper');
+      if(hi>=0)G.slices[hi]={l:'50',v:50,c:'#880e4f'};
+      drawWheel();renderPlayers();
+      showToastHost(`✅ ${G.players[G.turn].name} حصل على وسيلة المساعدة!`);
+    }
+    disableGuess();G.phase='idle';G.spinResult=null;setVowels(true);
+    setTimeout(()=>{
+      if(wordDone()){G.solverIndex=G.turn;syncSolverWin();}
+      else sync();
+    },2100);
+  } else {
+    G.pendingHelper=false;
+    showX();disableGuess();
+    setTimeout(()=>nextTurn(),1500);
+    sync();
+  }
+};
+
+function specialNextTurn(){
+  G.specialTurnIdx++;
+  const numP=G.players.length;
+  if(G.specialTurnIdx>=numP){
+    // انتهى دور كل اللاعبين في هذه الجولة
+    if(wordDone()){disableGuess();sync();return;}
+    // ابدأ جولة جديدة بنفس اللاعبين
+    G.specialTurnIdx=0;
+    G.guessedLetters=[];
+  }
+  G.turn=G.specialTurnOrder[G.specialTurnIdx];
+  renderPlayers();
+  document.getElementById('turnTag').textContent=`دور: ${G.players[G.turn].name}`;
+  enableGuess();
+  sync();
+}
+
+window.useVowel = function(type){
+  if(!G.vowelPhase){alert('حروف العلة قبل اللفة فقط');return;}
+  const p=G.players[G.turn];
+  if(p.rpts[G.round]<25&&p.total<25){showX();return;}
+  let ch=type==='alef'?'ا':type==='waw'?'و':'ي';
+  if(p.rpts[G.round]>=25)p.rpts[G.round]-=25;
+  else{const r=25-p.rpts[G.round];p.rpts[G.round]=0;p.total=Math.max(0,p.total-r);}
+  const cnt=countCh(ch);
+  if(cnt>0){addRev(ch);flashRevealChar(ch);}else showX();
+  updTot();renderPlayers();sync();
+};
+
+window.solveFull = function(){
+  const ans=prompt('اكتب العبارة كاملة:');if(!ans)return;
+  if(ans.trim()===G.word.trim()){
+    for(let ch of G.word)if(ch!==' ')addRev(ch);
+    renderWord();G.solverIndex=G.turn;
+    showToastHost(`✅ ${G.players[G.turn].name} حل العبارة!`);
+    updTot();renderPlayers();disableGuess();
+    syncSolverWin();
+  } else {showX();disableGuess();setTimeout(()=>nextTurn(),1500);}
+};
+
+// When word is solved: only solver keeps points, others get 0 (except special round)
+function syncSolverWin(){
+  if(RT[G.round]!=='special'){
+    G.players.forEach((p,i)=>{
+      if(i!==G.solverIndex) p.rpts[G.round]=0;
+    });
+    updTot();renderPlayers();
+  }
+  sync();
+}
+
+// ===== TURNS =====
+window.nextTurn = function(){
+  G.turn=(G.turn+1)%3;G.spinResult=null;G.phase='idle';G.vowelPhase=true;
+  G.guessedLetters=[];G.pendingHelper=false;
+  document.getElementById('sval').textContent='-';
+  hideAct();disableGuess();setVowels(true);renderPlayers();sync();
+};
+window.resetSpin = function(){G.spinResult=null;G.phase='idle';G.vowelPhase=true;document.getElementById('sval').textContent='-';hideAct();disableGuess();setVowels(true);sync();};
+
+// ===== ACTIONS =====
+window.doBankrupt=function(){G.players[G.turn].rpts[G.round]=0;updTot();hideAct();renderPlayers();sync();setTimeout(()=>nextTurn(),600);};
+window.doLose=function(){hideAct();sync();setTimeout(()=>nextTurn(),400);};
+
+// Helper
+window.triggerHelper=function(){
+  document.getElementById('helperPlayerName').textContent=G.players[G.turn].name;
+  document.getElementById('helperCard').classList.add('show');
+  hideAct();
+};
+window.confirmHelper=function(){
+  G.players[G.turn].helper=true;
+  // Replace helper slice
+  const hi=G.slices.findIndex(s=>s.v==='helper');
+  if(hi>=0)G.slices[hi]={l:'50',v:50,c:'#880e4f'};
+  document.getElementById('helperCard').classList.remove('show');
+  drawWheel();renderPlayers();
+  G.phase='guess';enableGuess();sync();
+};
+window.cancelHelper=function(){
+  document.getElementById('helperCard').classList.remove('show');
+  // Give back to player
+  G.players[G.turn].helper=true;
+  renderPlayers();
+};
+
+window.openChal=function(){document.getElementById('chalNm').textContent=`اللاعب: ${G.players[G.turn].name}`;document.getElementById('chalOv').classList.add('show');};
+window.chalRes=function(ok){
+  document.getElementById('chalOv').classList.remove('show');hideAct();
+  if(ok){G.phase='guess';enableGuess();}
+  else{G.players[G.turn].rpts[G.round]=Math.max(0,G.players[G.turn].rpts[G.round]-25);updTot();renderPlayers();showX();setTimeout(()=>nextTurn(),1500);}
+  sync();
+};
+
+window.openDbl=function(){
+  G.dblAtt=0;
+  document.getElementById('dblNm').textContent=`اللاعب: ${G.players[G.turn].name}`;
+  document.getElementById('dblBtn').textContent='المحاولة الأولى';document.getElementById('dblBtn').disabled=false;
+  document.getElementById('dblSt').textContent='';document.getElementById('dblIn').value='';
+  document.getElementById('dblOv').classList.add('show');hideAct();
+};
+window.dblGuess=function(){
+  const l=document.getElementById('dblIn').value.trim();if(!l)return;document.getElementById('dblIn').value='';
+  if(isVowel(l)){document.getElementById('dblSt').textContent='لا يمكن تخمين حروف العلة';return;}
+  const cnt=countCh(l);G.dblAtt++;
+  if(cnt>0){addRev(l);G.players[G.turn].rpts[G.round]+=25*cnt;updTot();document.getElementById('dblSt').textContent=`✅ "${l}" موجود ${cnt} مرة`;}
+  else document.getElementById('dblSt').textContent=`❌ "${l}" غير موجود`;
+  renderPlayers();renderWord();
+  if(G.dblAtt>=2){document.getElementById('dblBtn').disabled=true;document.getElementById('dblBtn').textContent='انتهت المحاولتان';setTimeout(()=>{closeDbl();nextTurn();},1500);}
+  else document.getElementById('dblBtn').textContent='المحاولة الثانية';
+  sync();
+};
+window.closeDbl=function(){document.getElementById('dblOv').classList.remove('show');};
+
+// ===== X =====
+function showX(){const e=document.getElementById('bigx');e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1500);}
+
+let _toastHostT;
+function showToastHost(msg){
+  let t=document.getElementById('toastHostEl');
+  if(!t){t=document.createElement('div');t.id='toastHostEl';t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e1e4a;border:2px solid #00e5ff;border-radius:12px;padding:12px 24px;color:#fff;font-family:Changa,Cairo,sans-serif;font-weight:700;font-size:0.95rem;z-index:9999;opacity:0;transition:opacity 0.3s;white-space:nowrap;';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(_toastHostT);_toastHostT=setTimeout(()=>{t.style.opacity='0';},2500);
+}
+
+// ===== FISHING =====
+function startFishing(){
+  G.phase='fish';G.revealed=[];G.solverIndex=-1;
+  G.fishBuzzerPlayer=-1;G.fishUsedPlayers=[];
+  clearInterval(G.fishInt);renderFishGrid();
+  G.fishInt=setInterval(()=>{
+    const u=[...new Set([...G.word].filter(c=>c!==' '&&!isRev(c)))];
+    if(!u.length){
+      // كل الحروف ظهرت ومحد أجاب - أعِد الجولة
+      clearInterval(G.fishInt);
+      showToastHost('لم يجب أحد - إعادة الجولة!');
+      setTimeout(()=>restartFishing(),1500);
+      return;
+    }
+    addRev(u[Math.floor(Math.random()*u.length)]);renderFishGrid();sync();
+  },2000);
+  sync();
+}
+
+function restartFishing(){
+  G.revealed=[];G.fishBuzzerPlayer=-1;G.fishUsedPlayers=[];
+  clearInterval(G.fishInt);renderFishGrid();
+  G.fishInt=setInterval(()=>{
+    const u=[...new Set([...G.word].filter(c=>c!==' '&&!isRev(c)))];
+    if(!u.length){clearInterval(G.fishInt);showToastHost('لم يجب أحد مرة أخرى!');return;}
+    addRev(u[Math.floor(Math.random()*u.length)]);renderFishGrid();sync();
+  },2000);
+  sync();
+}
+
+// اللاعب يضغط الزر - يُستدعى من Firebase
+function playerBuzzed(playerIdx){
+  if(G.fishBuzzerPlayer>=0)return; // شخص آخر ضغط بالفعل
+  if(G.fishUsedPlayers.includes(playerIdx))return; // استخدم محاولته
+  G.fishBuzzerPlayer=playerIdx;
+  clearInterval(G.fishInt); // أوقف ظهور الحروف
+  G.phase='fish_buzz';
+  // أظهر للهوست خيار صح/غلط
+  showFishBuzzUI(playerIdx);
+  sync();
+}
+
+function showFishBuzzUI(playerIdx){
+  const name=G.players[playerIdx]?.name||'لاعب';
+  let ov=document.getElementById('fishBuzzOv');
+  if(!ov){
+    ov=document.createElement('div');ov.id='fishBuzzOv';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;display:flex;align-items:center;justify-content:center;';
+    ov.innerHTML=`<div style="background:#0d0d2b;border:3px solid #00e5ff;border-radius:20px;padding:30px;text-align:center;max-width:350px;width:90%;">
+      <div style="font-size:1.3rem;font-weight:800;color:#00e5ff;margin-bottom:8px;font-family:Changa,Cairo,sans-serif;">🎣 اضغط الزر!</div>
+      <div id="fishBuzzName" style="font-size:1.8rem;font-weight:900;color:#ffea00;margin-bottom:20px;font-family:Changa,Cairo,sans-serif;"></div>
+      <div style="display:flex;gap:14px;justify-content:center;">
+        <button onclick="fishAnswer(true)" style="background:#00c853;color:#000;border:none;border-radius:12px;padding:14px 28px;font-size:1.1rem;font-weight:800;font-family:Changa,Cairo,sans-serif;cursor:pointer;">✓ صح</button>
+        <button onclick="fishAnswer(false)" style="background:#d32f2f;color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:1.1rem;font-weight:800;font-family:Changa,Cairo,sans-serif;cursor:pointer;">✗ غلط</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+  }
+  document.getElementById('fishBuzzName').textContent=name;
+  ov.style.display='flex';
+}
+
+window.fishAnswer=function(correct){
+  const ov=document.getElementById('fishBuzzOv');if(ov)ov.style.display='none';
+  const playerIdx=G.fishBuzzerPlayer;
+  G.fishUsedPlayers.push(playerIdx);
+  G.fishBuzzerPlayer=-1;
+  if(correct){
+    clearInterval(G.fishInt);
+    const pts=G.round===1?50:100;
+    G.players[playerIdx].rpts[G.round]+=pts;
+    updTot();renderPlayers();
+    showToastHost(`✅ ${G.players[playerIdx].name} أجاب صح! +${pts} نقطة`);
+    // كشف كل الكلمة
+    for(let ch of G.word)if(ch!==' ')addRev(ch);
+    renderFishGrid();
+    G.phase='fish';sync();
+  } else {
+    showToastHost(`❌ ${G.players[playerIdx].name} أجاب غلط`);
+    G.phase='fish';
+    // أعِد تشغيل ظهور الحروف من حيث وقف
+    G.fishInt=setInterval(()=>{
+      const u=[...new Set([...G.word].filter(c=>c!==' '&&!isRev(c)))];
+      if(!u.length){
+        clearInterval(G.fishInt);
+        showToastHost('لم يجب أحد - إعادة الجولة!');
+        setTimeout(()=>restartFishing(),1500);
+        return;
+      }
+      addRev(u[Math.floor(Math.random()*u.length)]);renderFishGrid();sync();
+    },2000);
+    sync();
+  }
+};
+
+window.revealNextFish=function(){
+  const u=[...new Set([...G.word].filter(c=>c!==' '&&!isRev(c)))];
+  if(!u.length){clearInterval(G.fishInt);return;}
+  addRev(u[Math.floor(Math.random()*u.length)]);renderFishGrid();sync();
+};
+function renderFishGrid(){
+  const el=document.getElementById('fishGridWrap');el.innerHTML='';
+  const row=document.createElement('div');row.className='word-grid';row.style.justifyContent='center';
+  [...G.word].forEach(ch=>{
+    const cell=document.createElement('div');
+    if(ch===' '){cell.className='wg-cell space-cell';cell.innerHTML=`<div class="wg-logo">${LOGO_SVG}</div>`;}
+    else{
+      const rev=isRev(ch);cell.className='wg-cell '+(rev?'letter-revealed':'letter-hidden');
+      if(rev){const s=document.createElement('span');s.className='wg-char';s.textContent=ch;cell.appendChild(s);}
+      else cell.innerHTML=`<div class="wg-logo">${LOGO_SVG}</div>`;
+    }
+    row.appendChild(cell);
+  });
+  el.appendChild(row);
+}
+window.revealAllFish=function(){clearInterval(G.fishInt);for(let ch of G.word)if(ch!==' ')addRev(ch);renderFishGrid();sync();};
+// مستمع لزر الصيد من اللاعبين
+onValue(ref(db,'fishBuzz'),snap=>{
+  const d=snap.val();if(!d)return;
+  if(G.phase==='fish'&&d.ts>(window._lastBuzz||0)){
+    window._lastBuzz=d.ts;
+    playerBuzzed(d.playerIdx);
+  }
+});
+
+// ===== ROUND =====
+window.endRound=function(){
+  clearInterval(G.fishInt);updTot();
+  document.getElementById('transT').textContent=`انتهت ${RN[G.round]}!`;
+  const s=document.getElementById('ssum');s.innerHTML='';
+  G.players.forEach(p=>{
+    const c=document.createElement('div');c.className='ss';
+    c.innerHTML=`<div class="ss-n">${p.name}</div><div class="ss-r">+${p.rpts[G.round]}</div><div class="ss-t">المجموع: ${p.total}</div>`;
+    s.appendChild(c);
+  });
+  document.getElementById('rtrans').classList.add('show');
+  // Push roundEnd to Firebase so players see their scores
+  set(ref(db,'game'),{
+    phase:'roundEnd',round:G.round,rName:RN[G.round],rType:RT[G.round],
+    turn:G.turn,cat:G.cat,wd:buildWD(),vowelOk:G.vowelPhase,
+    players:G.players.map((p,i)=>({
+      name:p.name,
+      r0:p.rpts[0]||0,r1:p.rpts[1]||0,r2:p.rpts[2]||0,r3:p.rpts[3]||0,r4:p.rpts[4]||0,
+      total:p.total,helper:p.helper,active:i===G.turn
+    })),
+    sLabel:G.spinResult?.sl?.l||null,
+    sliceOrder:G.slices.map(s=>s.l),
+    wheelAngle:wAng,
+    ts:Date.now()
+  });
+};
+window.goNext=function(){
+  document.getElementById('rtrans').classList.remove('show');
+  if(G.round>=4)showFinal();else initRound(G.round+1);
+};
+
+function initRound(r){
+  G.round=r;G.turn=0;G.revealed=[];G.spinResult=null;G.phase='idle';
+  G.vowelPhase=true;G.solverIndex=-1;G.guessedLetters=[];
+  G.pendingHelper=false;G.fishBuzzerPlayer=-1;G.fishUsedPlayers=[];
+  G.specialVal=0;G.specialTurnOrder=[0,1,2];G.specialTurnIdx=0;
+  const t=RT[r];
+  G.slices=shuffle(JSON.parse(JSON.stringify(t==='special'?BASE_SPECIAL:BASE)));
+  wAng=0;drawWheel();hideAct();disableGuess();setVowels(true);
+  for(let i=0;i<5;i++){const d=document.getElementById('rd'+i);d.className='rdot';if(i<r)d.classList.add('done');else if(i===r)d.classList.add('active');}
+  document.getElementById('rndLbl').textContent=RN[r];
+  // Layout by round type
+  const wbox=document.getElementById('wbox');
+  const wordbox=document.getElementById('wordbox');
+  const fishbox=document.getElementById('fishbox');
+  wbox.style.display=t==='fish'?'none':'flex';
+  wordbox.style.display=t==='fish'?'none':'flex';
+  fishbox.style.display=t==='fish'?'block':'none';
+  // Reset special round layout overrides
+  wbox.style.gridColumn='';wordbox.style.gridColumn='';wordbox.style.maxWidth='';
+  document.getElementById('specInfo').style.display=t==='special'?'block':'none';
+  if(t==='special')document.getElementById('specInfo').textContent='⭐ الجولة الخاصة - الف العجلة لتحديد قيمة الحرف (+100)';
+  if(t==='fish')document.getElementById('fishT').textContent=r===1?'🎣 جولة الصيد - 50 نقطة':'🎣 جولة الصيد - 100 نقطة';
+  renderPlayers();
+  document.getElementById('wsTitle').textContent=`إعداد ${RN[r]}`;
+  document.getElementById('wsC').value='';document.getElementById('wsW').value='';
+  document.getElementById('wsScreen').classList.add('show');
+  sync();
+}
+
+window.confirmWord=function(){
+  const w=document.getElementById('wsW').value.trim(),c=document.getElementById('wsC').value.trim()||'عام';
+  if(!w){alert('أدخل الكلمة');return;}
+  G.word=w;G.cat=c;G.revealed=[];G.solverIndex=-1;G.guessedLetters=[];
+  document.getElementById('wsScreen').classList.remove('show');
+  document.getElementById('catDisp').textContent=c;
+  const t=RT[G.round];
+  if(t==='special'){
+    // الجولة الخاصة: أظهر العجلة فقط، أخفِ الكلمة حتى يلف
+    document.getElementById('wbox').style.display='flex';
+    document.getElementById('wordbox').style.display='none';
+    document.getElementById('specInfo').textContent='⭐ الجولة الخاصة - الف العجلة لتحديد قيمة الحرف (+100)';
+    document.getElementById('specInfo').style.display='block';
+  } else {
+    renderWord();
+    if(t==='fish')startFishing();
+  }
+  sync();
+};
+
+// ===== PLAYERS =====
+function renderPlayers(){
+  const row=document.getElementById('playersRow');row.innerHTML='';
+  G.players.forEach((p,i)=>{
+    const c=document.createElement('div');
+    c.className='pcard'+(i===G.turn?' active':'');
+    c.onclick=()=>{G.turn=i;renderPlayers();sync();};
+    let html=(i===G.turn?'<div class="active-lbl">دوره</div>':'');
+    html+=`<div class="pname">${p.name}</div><div class="prnd">${p.rpts[G.round]}</div><div class="ptotl">المجموع</div><div class="ptotv">${p.total}</div>`;
+    if(p.helper){html+=`<button class="helper-btn" onclick="event.stopPropagation();showHelperCard(${i})">🃏 استخدام المساعدة</button>`;}
+    c.innerHTML=html;row.appendChild(c);
+  });
+  document.getElementById('turnTag').textContent=`دور: ${G.players[G.turn].name}`;
+}
+window.showHelperCard=function(idx){
+  document.getElementById('helperPlayerName').textContent=G.players[idx].name;
+  document.getElementById('helperCard').classList.add('show');
+  window._helperIdx=idx;
+};
+window.confirmHelper=function(){
+  const idx=window._helperIdx;
+  if(idx===undefined)return;
+  G.players[idx].helper=false;
+  const hi=G.slices.findIndex(s=>s.v==='helper');
+  if(hi>=0)G.slices[hi]={l:'50',v:50,c:'#880e4f'};
+  document.getElementById('helperCard').classList.remove('show');
+  drawWheel();renderPlayers();hideAct();sync();
+};
+window.cancelHelper=function(){document.getElementById('helperCard').classList.remove('show');};
+
+function updTot(){G.players.forEach(p=>{p.total=p.rpts.reduce((a,b)=>a+b,0);});}
+
+// ===== FINAL =====
+function showFinal(){
+  const s=[...G.players].sort((a,b)=>b.total-a.total);
+  const rk=['🥇','🥈','🥉'],cl=['p1','',''];
+  const pod=document.getElementById('podium');pod.innerHTML='';
+  s.forEach((p,i)=>{
+    const c=document.createElement('div');c.className=`pod ${cl[i]}`;
+    c.innerHTML=`<div style="font-size:1.8rem">${rk[i]}</div><div style="font-size:1.1rem;font-weight:700;margin:5px 0">${p.name}</div><div style="font-size:1.9rem;font-weight:900;color:var(--yellow)">${p.total}</div><div style="font-size:0.75rem;color:var(--muted)">نقطة</div>`;
+    pod.appendChild(c);
+  });
+  document.getElementById('finalScreen').classList.add('show');
+  set(ref(db,'game'),{phase:'final',players:G.players.map(p=>({name:p.name,rpts:p.rpts,total:p.total})),ts:Date.now()});
+}
+
+// ===== SYNC =====
+function buildWD(){
+  if(!G.word)return[];
+  return[...G.word].map(ch=>{if(ch===' ')return{t:'s'};return{t:'c',ch,r:isRev(ch)};});
+}
+function sync(){
+  updTot();
+  set(ref(db,'game'),{
+    phase:G.phase,round:G.round,rName:RN[G.round],rType:RT[G.round],
+    turn:G.turn,cat:G.cat,wd:buildWD(),vowelOk:G.vowelPhase,
+    players:G.players.map((p,i)=>({
+      name:p.name,
+      r0:p.rpts[0]||0,r1:p.rpts[1]||0,r2:p.rpts[2]||0,r3:p.rpts[3]||0,r4:p.rpts[4]||0,
+      total:p.total,helper:p.helper,active:i===G.turn
+    })),
+    sLabel:G.spinResult?.sl?.l||null,
+    sliceOrder:G.slices.map(s=>s.l),
+    wheelAngle:wAng,
+    fishBuzzerPlayer:G.fishBuzzerPlayer,
+    fishUsedPlayers:G.fishUsedPlayers,
+    specialVal:G.specialVal,
+    specialTurnIdx:G.specialTurnIdx,
+    ts:Date.now()
+  });
+}
+
+// Listen spin requests from players
+onValue(ref(db,'spinReq'),snap=>{
+  const d=snap.val();if(!d)return;
+  if(RT[G.round]==='special')return;
+  if(d.turn===G.turn&&d.ts>(window._ls||0)){
+    window._ls=d.ts;
+    if(!spinning&&G.phase==='idle')spinWheel();
+    else if(G.phase==='guess'||G.phase==='special_guess')showToastHost('خمّن حرف أولاً قبل اللف!');
+  }
+});
+
+// ===== مستمعات Admin =====
+onValue(ref(db,'adminWord'),snap=>{
+  const d=snap.val();if(!d)return;
+  if(d.ts>(window._lastAdminWord||0)){
+    window._lastAdminWord=d.ts;
+    const w=d.word,c=d.cat||'عام';
+    G.word=w;G.cat=c;G.revealed=[];G.solverIndex=-1;G.guessedLetters=[];
+    document.getElementById('wsScreen').classList.remove('show');
+    document.getElementById('catDisp').textContent=c;
+    const t=RT[G.round];
+    if(t==='special'){
+      document.getElementById('wbox').style.display='flex';
+      document.getElementById('wordbox').style.display='none';
+      document.getElementById('specInfo').textContent='⭐ الجولة الخاصة - الف العجلة لتحديد قيمة الحرف (+100)';
+      document.getElementById('specInfo').style.display='block';
+    } else {
+      renderWord();
+      if(t==='fish')startFishing();
+    }
+    set(ref(db,'needWord'),null);
+    set(ref(db,'adminWord'),null);
+    sync();
+    showToastHost(`✅ Admin أرسل الكلمة: "${w}"`);
+  }
+});
+
+onValue(ref(db,'adminEdit'),snap=>{
+  const d=snap.val();if(!d)return;
+  if(d.ts>(window._lastAdminEdit||0)){
+    window._lastAdminEdit=d.ts;
+    if(typeof d.playerIdx==='number'&&d.playerIdx>=0&&d.playerIdx<G.players.length){
+      G.players[d.playerIdx].rpts[d.round]=d.rpts;
+      updTot();renderPlayers();sync();
+      showToastHost(`✏️ Admin عدّل نقاط ${G.players[d.playerIdx].name}`);
+    }
+    set(ref(db,'adminEdit'),null);
+  }
+});
+
+onValue(ref(db,'adminGuess'),snap=>{
+  const d=snap.val();if(!d)return;
+  if(d.ts>(window._lastAdminGuess||0)){
+    window._lastAdminGuess=d.ts;
+    document.getElementById('lin').value=d.letter;
+    guessLetter();
+    set(ref(db,'adminGuess'),null);
+  }
+});
+
+drawWheel();
+</script>
+</body>
+</html>
